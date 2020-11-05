@@ -1,5 +1,5 @@
 Welcome to ssm-rest-python-client's documentation!
-======================================
+==================================================
 
 .. toctree::
    :maxdepth: 2
