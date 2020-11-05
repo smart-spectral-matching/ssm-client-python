@@ -13,6 +13,7 @@ twine = "*"
 pytest = "*"
 pytest-runner = "*" 
 Sphinx = "*"
+requests-mock = "*"
 
 [packages]
 
