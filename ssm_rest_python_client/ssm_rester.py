@@ -1,6 +1,5 @@
 import requests
 
-from ssm_rest_python_client.exceptions import DatasetNotFoundException
 from ssm_rest_python_client.models import DatasetModel
 
 _DATASET_ENDPOINT = "datasets"
@@ -19,7 +18,7 @@ class SSMRester:
         self.hostname = hostname
         self.port = port
 
-    def __dataset_endpoint(self, resource=None):
+    def _dataset_endpoint(self, resource=None):
         """
         Helper function to form the address of the `datasets` endpoint
 
@@ -37,22 +36,6 @@ class SSMRester:
             endpoint += "/{}".format(resource)
         return endpoint
 
-    def __check_response_for_uuid(self, response, uuid):
-        """
-        Helper function to check the HTTP responses and raise
-        necessary exceptions.
-
-        Args:
-            response (requests.Response): Response object from requests call
-
-        Raises:
-            DatasetNotFoundException: Raised when we cannot find the Dataset
-        """
-        if response.status_code == 404:
-            msg = "Datset UUID: {uuid} NOT FOUND at endpoint: {endpoint}"
-            msg = msg.format(uuid=uuid, endpoint=self.__dataset_endpoint(uuid))
-            raise DatasetNotFoundException(msg)
-
     @property
     def uri(self):
         """
@@ -67,7 +50,7 @@ class SSMRester:
         Returns:
             dataset (DatasetModel): Created dataset as a DatasetModel object
         """
-        response = requests.post(self.__dataset_endpoint())
+        response = requests.post(self._dataset_endpoint())
         return DatasetModel(**response.json())
 
     def get_dataset_by_uuid(self, uuid):
@@ -83,8 +66,8 @@ class SSMRester:
         Returns:
             dataset (DatasetModel): Dataset with UUID as a DatasetModel object
         """
-        response = requests.get(self.__dataset_endpoint(uuid))
-        self.__check_response_for_uuid(response, uuid)
+        response = requests.get(self._dataset_endpoint(uuid))
+        response.raise_for_status()
         return DatasetModel(**response.json())
 
     def delete_dataset_by_uuid(self, uuid):
@@ -97,5 +80,5 @@ class SSMRester:
         Raises:
             DatasetNotFoundException: Raised when we cannot find the Dataset
         """
-        response = requests.delete(self.__dataset_endpoint(uuid))
-        self.__check_response_for_uuid(response, uuid)
+        response = requests.delete(self._dataset_endpoint(uuid))
+        response.raise_for_status()
