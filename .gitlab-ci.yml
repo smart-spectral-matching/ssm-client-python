@@ -1,6 +1,9 @@
 stages:
     - build
 
+variables:
+    GIT_STRATEGY: clone
+
 include:
      remote: "https://code.ornl.gov/rse-deployment/rse-sharables/-/raw/master/.gitlab-ci-before_script.yml"
 
