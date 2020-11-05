@@ -1,0 +1,18 @@
+stages:
+    - build
+
+lint:
+    stage: build
+    script:
+        - func_rse_docker_cleanup
+        - docker build -f .ci/Dockerfile -t ssm-rest-python-client-lint .
+        - docker run ssm-rest-python-client-lint pipenv run make lint
+        - func_rse_docker_cleanup
+
+test:
+    stage: build
+    script:
+        - func_rse_docker_cleanup
+        - docker build -f .ci/Dockerfile -t ssm-rest-python-client-test .
+        - docker run ssm-rest-python-client-test pipenv run make test
+        - func_rse_docker_cleanup
