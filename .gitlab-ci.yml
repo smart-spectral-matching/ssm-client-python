@@ -1,0 +1,52 @@
+stages:
+    - build
+
+variables:
+    GIT_STRATEGY: clone
+
+include:
+     remote: "https://code.ornl.gov/rse-deployment/rse-sharables/-/raw/master/.gitlab-ci-before_script.yml"
+
+lint:
+    stage: build
+    script:
+        - func_rse_docker_cleanup
+        - docker login --username=$CI_REGISTRY_USER --password=$CI_REGISTRY_PASSWORD $CI_REGISTRY
+        - docker build -f .ci/Dockerfile -t ssm-rest-python-client-lint .
+        - docker run ssm-rest-python-client-lint pipenv run make lint
+        - func_rse_docker_cleanup
+    tags:
+        - rse-ssm-builder
+
+test:
+    stage: build
+    script:
+        - func_rse_docker_cleanup
+        - docker login --username=$CI_REGISTRY_USER --password=$CI_REGISTRY_PASSWORD $CI_REGISTRY
+        - docker build -f .ci/Dockerfile -t ssm-rest-python-client-test .
+        - docker run ssm-rest-python-client-test pipenv run make test
+        - func_rse_docker_cleanup
+    tags:
+        - rse-ssm-builder
+
+test-all:
+    stage: build
+    script:
+        - func_rse_docker_cleanup
+        - docker login --username=$CI_REGISTRY_USER --password=$CI_REGISTRY_PASSWORD $CI_REGISTRY
+        - docker build -f .ci/Dockerfile -t ssm-rest-python-client-test-all .
+        - docker run ssm-rest-python-client-test-all pipenv run make test-all
+        - func_rse_docker_cleanup
+    tags:
+        - rse-ssm-builder
+
+coverage:
+    stage: build
+    script:
+        - func_rse_docker_cleanup
+        - docker login --username=$CI_REGISTRY_USER --password=$CI_REGISTRY_PASSWORD $CI_REGISTRY
+        - docker build -f .ci/Dockerfile -t ssm-rest-python-client-coverage .
+        - docker run ssm-rest-python-client-coverage pipenv run make coverage
+        - func_rse_docker_cleanup
+    tags:
+        - rse-ssm-builder
