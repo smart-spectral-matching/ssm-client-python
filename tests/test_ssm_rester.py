@@ -3,10 +3,10 @@
 """Tests for `ssm_rest_python_client` package."""
 
 import pytest
-
+import requests
+import requests_mock  # noqa: F401
 
 from ssm_rest_python_client import SSMRester
-from ssm_rest_python_client.exceptions import DatasetNotFoundException
 
 
 @pytest.fixture
@@ -28,12 +28,22 @@ def test_dataset_read(ssm_rester):
     assert dataset == grabbed_dataset
 
 
-def test_dataset_delete(ssm_rester):
+def test_dataset_delete(ssm_rester, requests_mock):  # noqa: F811
     """Test deleting dataset w/ client"""
+    uuid = "foo"
+    uri = "bar"
+    json = {'uuid': uuid, 'uri': uri}
+
+    requests_mock.post(ssm_rester._dataset_endpoint(), json=json)
     dataset = ssm_rester.create_new_dataset()
+
+    requests_mock.get(ssm_rester._dataset_endpoint(uuid), json=json)
     grabbed_dataset = ssm_rester.get_dataset_by_uuid(dataset.uuid)
     assert dataset == grabbed_dataset
 
+    requests_mock.delete(ssm_rester._dataset_endpoint(uuid))
     ssm_rester.delete_dataset_by_uuid(dataset.uuid)
-    with pytest.raises(DatasetNotFoundException):
+
+    requests_mock.get(ssm_rester._dataset_endpoint(uuid), status_code=404)
+    with pytest.raises(requests.HTTPError):
         ssm_rester.get_dataset_by_uuid(dataset.uuid)
