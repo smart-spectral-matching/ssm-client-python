@@ -15,7 +15,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client.git/issues.
+Report bugs at https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/issues.
 
 If you are reporting a bug, please include:
 
@@ -45,7 +45,7 @@ articles, and such.
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client.git/issues.
+The best way to send feedback is to file an issue at https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/issues.
 
 If you are proposing a feature:
 
@@ -64,7 +64,7 @@ Ready to contribute? Here's how to set up `ssm_rest_python_client` for local dev
 
     $ git clone git@code.ornl.gov:your_name_here/ssm_rest_python_client.git
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
+3. Install your local copy into a virtualenv. Assuming you have [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/) installed, this is how you set up your fork for local development::
 
     $ mkvirtualenv ssm_rest_python_client
     $ cd ssm_rest_python_client/
