@@ -4,6 +4,8 @@ __author__ = """Marshall McDonnell"""
 __email__ = 'mcdonnellmt@ornl.gov'
 __version__ = '0.1.0'
 
-from ssm_rest_python_client.client import SSMClient
+from .ssm_rester import SSMRester
 
-__all__ = ["SSMClient"]
+__all__ = [
+    "SSMRester",
+]
