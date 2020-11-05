@@ -14,16 +14,28 @@ def ssm_rester():
     return SSMRester()
 
 
-def test_dataset_create(ssm_rester):
+def test_dataset_create(ssm_rester, requests_mock):  # noqa: F811
     """Test creating dataset w/ client"""
+    uuid = 64*"X"
+    uri = "http://localhost/{}".format(uuid)
+    json = {'uuid': uuid, 'uri': uri}
+
+    requests_mock.post(ssm_rester._dataset_endpoint(), json=json)
     dataset = ssm_rester.create_new_dataset()
     assert len(dataset.uuid) == 64
     assert dataset.uri.__contains__(dataset.uuid)
 
 
-def test_dataset_read(ssm_rester):
+def test_dataset_read(ssm_rester, requests_mock):  # noqa: F811
     """Test read dataset w/ client"""
+    uuid = "foo"
+    uri = "bar"
+    json = {'uuid': uuid, 'uri': uri}
+
+    requests_mock.post(ssm_rester._dataset_endpoint(), json=json)
     dataset = ssm_rester.create_new_dataset()
+
+    requests_mock.get(ssm_rester._dataset_endpoint(uuid), json=json)
     grabbed_dataset = ssm_rester.get_dataset_by_uuid(dataset.uuid)
     assert dataset == grabbed_dataset
 
