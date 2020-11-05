@@ -15,7 +15,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client.git/issues.
+Report bugs at https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/issues.
 
 If you are reporting a bug, please include:
 
@@ -45,7 +45,7 @@ articles, and such.
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client.git/issues.
+The best way to send feedback is to file an issue at https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/issues.
 
 If you are proposing a feature:
 
@@ -63,12 +63,12 @@ Ready to contribute? Here's how to set up `ssm_rest_python_client` for local dev
 2. Clone your fork locally::
 
     $ git clone git@code.ornl.gov:your_name_here/ssm_rest_python_client.git
-
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
-
-    $ mkvirtualenv ssm_rest_python_client
     $ cd ssm_rest_python_client/
-    $ python setup.py develop
+
+3. Install your local copy into a virtualenv. Assuming you have [pipenv]() installed, this is how you set up your fork for local development::
+
+    $ pipenv install
+    $ pipenv shell or pipenv run <cmd> for a single command
 
 4. Create a branch for local development::
 
@@ -79,9 +79,9 @@ Ready to contribute? Here's how to set up `ssm_rest_python_client` for local dev
 5. When you're done making changes, check that your changes pass flake8 and the
    tests, including testing other Python versions with tox::
 
-    $ flake8 ssm_rest_python_client tests
-    $ python setup.py test or pytest
-    $ tox
+    $ pipenv run make lint
+    $ pipenv run make test
+    $ pipenv run make test-all
 
    To get flake8 and tox, just pip install them into your virtualenv.
 
@@ -102,7 +102,7 @@ Before you submit a pull request, check that it meets these guidelines:
 2. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
-3. The pull request should work for Python 3.5, 3.6, 3.7 and 3.8, and for PyPy. Check
+3. The pull request should work for Python 3.6, 3.7 and 3.8, and for PyPy. Check
    GitLab CI and make sure that the tests pass for all supported Python versions.
 
 Tips
