@@ -1,6 +1,9 @@
 stages:
     - build
 
+include:
+     remote: "https://code.ornl.gov/rse-deployment/rse-sharables/-/raw/master/.gitlab-ci-before_script.yml"
+
 lint:
     stage: build
     script:
