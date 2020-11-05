@@ -8,6 +8,8 @@ lint:
         - docker build -f .ci/Dockerfile -t ssm-rest-python-client-lint .
         - docker run ssm-rest-python-client-lint pipenv run make lint
         - func_rse_docker_cleanup
+    tags:
+        - rse-ssm-builder
 
 test:
     stage: build
@@ -16,3 +18,5 @@ test:
         - docker build -f .ci/Dockerfile -t ssm-rest-python-client-test .
         - docker run ssm-rest-python-client-test pipenv run make test
         - func_rse_docker_cleanup
+    tags:
+        - rse-ssm-builder
