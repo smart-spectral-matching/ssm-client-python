@@ -5,3 +5,5 @@ ARG APP=/home/app
 WORKDIR $APP
 
 COPY . $APP
+
+RUN pipenv install --dev
