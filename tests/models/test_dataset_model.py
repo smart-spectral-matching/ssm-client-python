@@ -30,6 +30,17 @@ def test_construction_just_uri():
     assert dataset.uri == kwargs['uri']
 
 
+def test_dataset_repr():
+    dataset = DatasetModel()
+    target = "DatasetModel(uuid={uuid},uri={uri})"
+    assert target.format(uuid=None, uri=None) == dataset.__str__()
+
+    uuid = "bar"
+    uri = "foo"
+    dataset = DatasetModel(uuid=uuid, uri=uri)
+    assert target.format(uuid=uuid, uri=uri) == dataset.__str__()
+
+
 def test_datasets_equal():
     a = DatasetModel()
     b = DatasetModel()
