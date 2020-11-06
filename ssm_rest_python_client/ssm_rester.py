@@ -48,7 +48,7 @@ class SSMRester:
         Create a new dataset at SSM REST API
 
         Returns:
-            dataset (DatasetContainer): Created dataset as a DatasetContainer object
+            dataset (DatasetContainer): Created DatasetContainer object
         """
         response = requests.post(self._dataset_endpoint())
         return DatasetContainer(**response.json())
@@ -64,7 +64,7 @@ class SSMRester:
             DatasetNotFoundException: Raised when we cannot find the Dataset
 
         Returns:
-            dataset (DatasetContainer): Dataset with UUID as a DatasetContainer object
+            dataset (DatasetContainer): DatasetContainer object with given UUID
         """
         response = requests.get(self._dataset_endpoint(uuid))
         response.raise_for_status()
