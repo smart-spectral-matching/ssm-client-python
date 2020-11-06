@@ -1,6 +1,6 @@
 import requests
 
-from ssm_rest_python_client.models import DatasetModel
+from ssm_rest_python_client.containers import DatasetContainer
 
 _DATASET_ENDPOINT = "datasets"
 _MODELS_ENDPOINT = "models"
@@ -39,7 +39,7 @@ class SSMRester:
     @property
     def uri(self):
         """
-        URI property for DatasetModel
+        URI property for DatasetContainer
         """
         return "{host}:{port}".format(host=self.hostname, port=self.port)
 
@@ -48,10 +48,10 @@ class SSMRester:
         Create a new dataset at SSM REST API
 
         Returns:
-            dataset (DatasetModel): Created dataset as a DatasetModel object
+            dataset (DatasetContainer): Created dataset as a DatasetContainer object
         """
         response = requests.post(self._dataset_endpoint())
-        return DatasetModel(**response.json())
+        return DatasetContainer(**response.json())
 
     def get_dataset_by_uuid(self, uuid):
         """
@@ -64,11 +64,11 @@ class SSMRester:
             DatasetNotFoundException: Raised when we cannot find the Dataset
 
         Returns:
-            dataset (DatasetModel): Dataset with UUID as a DatasetModel object
+            dataset (DatasetContainer): Dataset with UUID as a DatasetContainer object
         """
         response = requests.get(self._dataset_endpoint(uuid))
         response.raise_for_status()
-        return DatasetModel(**response.json())
+        return DatasetContainer(**response.json())
 
     def delete_dataset_by_uuid(self, uuid):
         """
