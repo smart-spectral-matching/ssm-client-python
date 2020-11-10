@@ -57,8 +57,8 @@ def test_datasets_equal():
 
     uri = "uri"
     uuid = "uuid"
-    a = DatasetContainer(uri=uri, uuid=uuid)
-    b = DatasetContainer(uri=uri, uuid=uuid)
+    a = DatasetContainer(uuid=uuid, uri=uri)
+    b = DatasetContainer(uuid=uuid, uri=uri)
     assert a == b
 
 
