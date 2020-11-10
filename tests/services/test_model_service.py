@@ -8,6 +8,8 @@ import requests_mock  # noqa: F401
 
 from ssm_rest_python_client.containers import DatasetContainer
 from ssm_rest_python_client.services import ModelService
+from ssm_rest_python_client.services.model_service import \
+    MismatchedDatasetException
 
 
 @pytest.fixture
@@ -53,11 +55,31 @@ def model_uuid():
 
 
 @pytest.fixture
-def model_service():
+def dataset():
     dataset_uuid = 64 * "X"
     uri = "http://localhost/{}".format(dataset_uuid)
-    dataset = DatasetContainer(uuid=dataset_uuid, uri=uri)
+    return DatasetContainer(uuid=dataset_uuid, uri=uri)
+
+
+@pytest.fixture
+def model_service(dataset):
     return ModelService(dataset=dataset)
+
+
+def test_construction(dataset):
+    """Tests construction of ModelService object"""
+    model = ModelService(dataset=dataset)
+    assert model.hostname == "http://localhost"
+    assert model.port == 8080
+    assert model.dataset_uuid == dataset.uuid
+
+    model = ModelService(dataset=dataset, dataset_uuid=dataset.uuid)
+    assert model.hostname == "http://localhost"
+    assert model.port == 8080
+    assert model.dataset_uuid == dataset.uuid
+
+    with pytest.raises(MismatchedDatasetException):
+        ModelService(dataset=dataset, dataset_uuid=64*"Z")
 
 
 def test_create(model_input, model_output, model_uuid, model_service, requests_mock):  # noqa: F811, E501
