@@ -7,6 +7,7 @@ import requests
 import requests_mock  # noqa: F401
 
 from ssm_rest_python_client import SSMRester
+from ssm_rest_python_client.containers import DatasetContainer
 
 
 @pytest.fixture
@@ -16,7 +17,7 @@ def ssm_rester():
 
 def test_dataset_create(ssm_rester, requests_mock):  # noqa: F811
     """Test creating dataset w/ client"""
-    uuid = 64*"X"
+    uuid = 64 * "X"
     uri = "http://localhost/{}".format(uuid)
     json = {'uuid': uuid, 'uri': uri}
 
@@ -59,3 +60,14 @@ def test_dataset_delete(ssm_rester, requests_mock):  # noqa: F811
     requests_mock.get(ssm_rester.dataset._endpoint(uuid), status_code=404)
     with pytest.raises(requests.HTTPError):
         ssm_rester.dataset.get_by_uuid(dataset.uuid)
+
+
+def test_initialize_model_for_dataset(ssm_rester):
+    """Test initializing the model for a dataset"""
+    dataset_uuid = 64 * "X"
+    uri = "http://localhost/{}".format(dataset_uuid)
+    dataset = DatasetContainer(uuid=dataset_uuid, uri=uri)
+    ssm_rester.initialize_model_for_dataset(dataset)
+    assert ssm_rester.model.hostname == ssm_rester.hostname
+    assert ssm_rester.model.port == ssm_rester.port
+    assert ssm_rester.model.dataset_uuid == dataset_uuid
