@@ -1,9 +1,4 @@
-import requests
-
-from ssm_rest_python_client.models import DatasetModel
-
-_DATASET_ENDPOINT = "datasets"
-_MODELS_ENDPOINT = "models"
+from ssm_rest_python_client.services import DatasetService, ModelService
 
 
 class SSMRester:
@@ -18,67 +13,19 @@ class SSMRester:
         self.hostname = hostname
         self.port = port
 
-    def _dataset_endpoint(self, resource=None):
+        self.dataset = DatasetService(hostname=self.hostname, port=self.port)
+        self.model = None
+
+    def initialize_model_for_dataset(self, dataset):
         """
-        Helper function to form the address of the `datasets` endpoint
+        Initialize the Model service for Dataset
 
         Args:
-            resource (str): Resource in form of UUID to access a give dataset
-
-        Return:
-            endpoint (str): Datasets endpoint to use
+            dataset (DatasetContainer): Dataset to setup a ModelService for
         """
-        endpoint = "{uri}/{dataset}".format(
-            uri=self.uri,
-            dataset=_DATASET_ENDPOINT)
 
-        if resource:
-            endpoint += "/{}".format(resource)
-        return endpoint
-
-    @property
-    def uri(self):
-        """
-        URI property for DatasetModel
-        """
-        return "{host}:{port}".format(host=self.hostname, port=self.port)
-
-    def create_new_dataset(self):
-        """
-        Create a new dataset at SSM REST API
-
-        Returns:
-            dataset (DatasetModel): Created dataset as a DatasetModel object
-        """
-        response = requests.post(self._dataset_endpoint())
-        return DatasetModel(**response.json())
-
-    def get_dataset_by_uuid(self, uuid):
-        """
-        Get dataset for given UUID at SSM REST API
-
-        Args:
-            uuid (str): 64-character UUID for dataset
-
-        Raises:
-            DatasetNotFoundException: Raised when we cannot find the Dataset
-
-        Returns:
-            dataset (DatasetModel): Dataset with UUID as a DatasetModel object
-        """
-        response = requests.get(self._dataset_endpoint(uuid))
-        response.raise_for_status()
-        return DatasetModel(**response.json())
-
-    def delete_dataset_by_uuid(self, uuid):
-        """
-        Delete the dataset for given UUID at SSM REST API
-
-        Args:
-            uuid (str): 64-character UUID for dataset
-
-        Raises:
-            DatasetNotFoundException: Raised when we cannot find the Dataset
-        """
-        response = requests.delete(self._dataset_endpoint(uuid))
-        response.raise_for_status()
+        self.model = ModelService(
+            hostname=self.hostname,
+            port=self.port,
+            dataset=dataset
+        )

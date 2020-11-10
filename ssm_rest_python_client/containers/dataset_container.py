@@ -1,17 +1,17 @@
 import json
 
 
-class DatasetModel:
+class DatasetContainer:
     def __init__(self, **kwargs):
         self.__uuid = kwargs.get('uuid', None)
         self.__uri = kwargs.get('uri', None)
 
     def __eq__(self, other):
         """
-        Support "==" comparison between DatasetModels
+        Support "==" comparison between DatasetContainers
 
         Args:
-            other (DatasetModel): Dataset to compare for equality.
+            other (DatasetContainer): Dataset to compare for equality.
 
         Return:
             areDatasetsEqual (bool)
@@ -22,10 +22,10 @@ class DatasetModel:
 
     def __ne__(self, other):
         """
-        Support "!=" comparison between DatasetModels
+        Support "!=" comparison between DatasetContainers
 
         Args:
-            other (DatasetModel): Dataset to compare for non-equality.
+            other (DatasetContainer): Dataset to compare for non-equality.
 
         Return:
             areDatasetsNotEqual (bool)
@@ -43,19 +43,19 @@ class DatasetModel:
         return json.dumps(dataset_dict)
 
     def __str__(self):
-        fmt = "DatasetModel(uuid={uuid},uri={uri})"
+        fmt = "DatasetContainer(uuid={uuid},uri={uri})"
         return fmt.format(uuid=self.uuid, uri=self.uri)
 
     @property
     def uuid(self):
         """
-        UUID for DatasetModel
+        UUID for DatasetContainer
         """
         return self.__uuid
 
     @property
     def uri(self):
         """
-        Fuseki server URI / URL where DatasetModel is stored
+        Fuseki server URI / URL where DatasetContainer is stored
         """
         return self.__uri
