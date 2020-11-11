@@ -77,7 +77,7 @@ servedocs: docs ## compile the docs watching for changes
 ##   requires a .pypirc file w/ ${PROJECT_NAME} defined:
 ##		- Reference: https://code.ornl.gov/help/user/packages/pypi_repository/index.md
 ##		- PROJECT_NAME is of the form "code-ssm-python-client"
-release-use-pypirc:
+release-use-pypirc: dist
 	twine upload --repository code-ssm-python-client dist/*
 
 ## package and upload a release using twine environment variables and project url
@@ -94,3 +94,8 @@ dist: clean ## builds source and wheel package
 
 install: clean ## install the package to the active Python's site-packages
 	python setup.py install
+
+bumpversion-patch:  ## bump the patch version
+	bump2version patch
+	##git push
+	##git push --tags
