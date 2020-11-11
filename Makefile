@@ -73,8 +73,19 @@ docs: ## generate Sphinx HTML documentation, including API docs
 servedocs: docs ## compile the docs watching for changes
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
 
-release: dist ## package and upload a release
-	twine upload dist/*
+## package and upload a release using a ~/.pypirc file
+##   requires a .pypirc file w/ ${PROJECT_NAME} defined:
+##		- Reference: https://code.ornl.gov/help/user/packages/pypi_repository/index.md
+##		- PROJECT_NAME is of the form "code-ssm-python-client"
+release-use-pypirc: dist
+	twine upload --repository code-ssm-python-client dist/*
+
+## package and upload a release using twine environment variables and project url
+##   requires TWINE_USERNAME, TWINE_PASSWORD, and PROJECT_URL variables set:
+##		- Reference: https://docs.gitlab.com/ee/user/packages/pypi_repository/#authenticate-with-a-ci-job-token)
+##		- PROJECT_URL is of the form https://gitlab.example.com/api/v4/projects/${CI_PROJECT_ID}/packages/pypi
+release-use-url: dist
+	twine upload --verbose --repository-url $(PROJECT_URL) dist/*
 
 dist: clean ## builds source and wheel package
 	python setup.py sdist
@@ -83,3 +94,12 @@ dist: clean ## builds source and wheel package
 
 install: clean ## install the package to the active Python's site-packages
 	python setup.py install
+
+bump-version-patch:  ## bump the patch version
+	bump2version patch
+
+bump-version-minor:  ## bump the minor version
+	bump2version minor
+
+bump-version-major:  ## bump the major version
+	bump2version major
