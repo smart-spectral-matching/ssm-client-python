@@ -57,7 +57,7 @@ test-all:
         - tags
 
 upload-package:
-    stage: build
+    stage: deploy
     script:
         - func_rse_docker_cleanup
         - docker run -v $(pwd):/app -w /app  python:3.6 bash -c "pip install pipenv && pipenv install --dev && pipenv run make dist && TWINE_PASSWORD=${DEPLOY_TOKEN} TWINE_USERNAME=${DEPLOY_TOKEN_USERNAME} PROJECT_URL=https://code.ornl.gov/api/v4/projects/${CI_PROJECT_ID}/packages/pypi pipenv run make release-use-url"
