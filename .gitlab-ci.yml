@@ -1,5 +1,6 @@
 stages:
     - build
+    - deploy
 
 variables:
     GIT_STRATEGY: clone
@@ -29,17 +30,6 @@ test:
     tags:
         - rse-ssm-builder
 
-test-all:
-    stage: build
-    script:
-        - func_rse_docker_cleanup
-        - docker login --username=$CI_REGISTRY_USER --password=$CI_REGISTRY_PASSWORD $CI_REGISTRY
-        - docker build -f .ci/Dockerfile -t ssm-rest-python-client-test-all .
-        - docker run ssm-rest-python-client-test-all pipenv run make test-all
-        - func_rse_docker_cleanup
-    tags:
-        - rse-ssm-builder
-
 coverage:
     stage: build
     script:
@@ -50,3 +40,30 @@ coverage:
         - func_rse_docker_cleanup
     tags:
         - rse-ssm-builder
+
+test-all:
+    stage: build
+    script:
+        - func_rse_docker_cleanup
+        - docker login --username=$CI_REGISTRY_USER --password=$CI_REGISTRY_PASSWORD $CI_REGISTRY
+        - docker build -f .ci/Dockerfile -t ssm-rest-python-client-test-all .
+        - docker run ssm-rest-python-client-test-all pipenv run make test-all
+        - func_rse_docker_cleanup
+    tags:
+        - rse-ssm-builder
+    only:
+        - dev
+        - master
+        - tags
+
+upload-package:
+    stage: build
+    script:
+        - func_rse_docker_cleanup
+        - docker run -v $(pwd):/app -w /app  python:3.6 bash -c "pip install pipenv && pipenv install --dev && pipenv run make dist && TWINE_PASSWORD=${DEPLOY_TOKEN} TWINE_USERNAME=${DEPLOY_TOKEN_USERNAME} PROJECT_URL=https://code.ornl.gov/api/v4/projects/${CI_PROJECT_ID}/packages/pypi pipenv run make release-use-url"
+        - sudo chown -R gitlab-runner .
+        - func_rse_docker_cleanup
+    tags:
+        - rse-ssm-builder
+    only:
+        - tags

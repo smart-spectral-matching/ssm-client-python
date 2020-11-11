@@ -85,7 +85,7 @@ release-use-pypirc:
 ##		- Reference: https://docs.gitlab.com/ee/user/packages/pypi_repository/#authenticate-with-a-ci-job-token)
 ##		- PROJECT_URL is of the form https://gitlab.example.com/api/v4/projects/${CI_PROJECT_ID}/packages/pypi
 release-use-url: dist
-	twine upload --repository-url ${PROJECT_URL} dist/*
+	twine upload --verbose --repository-url $(PROJECT_URL) dist/*
 
 dist: clean ## builds source and wheel package
 	python setup.py sdist
