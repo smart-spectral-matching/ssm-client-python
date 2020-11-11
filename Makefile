@@ -95,7 +95,11 @@ dist: clean ## builds source and wheel package
 install: clean ## install the package to the active Python's site-packages
 	python setup.py install
 
-bumpversion-patch:  ## bump the patch version
+bump-version-patch:  ## bump the patch version
 	bump2version patch
-	##git push
-	##git push --tags
+
+bump-version-minor:  ## bump the minor version
+	bump2version minor
+
+bump-version-major:  ## bump the major version
+	bump2version major
