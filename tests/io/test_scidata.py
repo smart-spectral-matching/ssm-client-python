@@ -16,3 +16,16 @@ def test_get_scidata_base():
     generated_time = scidata_dict.get('generatedAt')
     assert len(generated_time.split('-')) == 3
     assert len(generated_time.split(':')) == 3
+
+    assert 'version' in scidata_dict
+    assert scidata_dict.get('version') == 2
+
+    assert '@id' in scidata_dict
+    assert not scidata_dict.get('@id')
+
+    assert '@graph' in scidata_dict
+    graph = scidata_dict.get('@graph')
+    assert '@id' in graph
+    assert not graph.get('@id')
+    assert '@type' in graph
+    assert graph.get('@type') == "sdo:scidataFramework"

@@ -17,6 +17,15 @@ _CONTEXT_HEADER = {
     ]
 }
 
+_DEFAULTS = {
+    "version": 2,
+    "@id": "",
+    "@graph": {
+        "@id": "",
+        "@type": "sdo:scidataFramework",
+    }
+}
+
 
 def _get_context_header():
     """
@@ -46,6 +55,9 @@ def get_scidata_base():
     # Add generatedAt key
     dt = datetime.datetime.now()
     generated_at = dt.strftime("%Y-%m-%d %H:%M:%S")
-    scidata_dict.update({'generatedAt': generated_at})
+    scidata_dict.update({"generatedAt": generated_at})
+
+    # Add defaults
+    scidata_dict.update(_DEFAULTS)
 
     return scidata_dict
