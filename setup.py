@@ -4,13 +4,15 @@
 
 from setuptools import setup, find_packages
 
+GITLAB_REPO = 'https://code.ornl.gov/rse/datastreams/ssm/clients'
+
 with open('README.rst') as readme_file:
     readme = readme_file.read()
 
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = [ ]
+requirements = []
 
 setup_requirements = ['pytest-runner', ]
 
@@ -37,11 +39,12 @@ setup(
     include_package_data=True,
     keywords='ssm_rest_python_client',
     name='ssm_rest_python_client',
-    packages=find_packages(include=['ssm_rest_python_client', 'ssm_rest_python_client.*']),
+    packages=find_packages(
+        include=['ssm_rest_python_client', 'ssm_rest_python_client.*']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client.git',
+    url=GITLAB_REPO + 'ssm-rest-python-client.git',
     version='0.1.0',
     zip_safe=False,
 )
