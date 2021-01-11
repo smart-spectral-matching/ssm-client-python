@@ -9,7 +9,7 @@ class UnknownFileTypeError(Exception):
 
 
 ioformats = {
-    'scidata-jsonld': 'scidata',
+    'scidata-jsonld': 'scidata_jsonld',
     'jcamp': 'jcamp'
 }
 
@@ -36,7 +36,7 @@ def read(filename, ioformat=None, **kwargs) -> dict:
     """
     module = _get_ioformat(ioformat)
     function = _readfunc(module, ioformats.get(ioformat))
-    return function(**kwargs)
+    return function(filename, **kwargs)
 
 
 def write(filename, scidata_dict, ioformat=None, **kwargs) -> None:
@@ -45,4 +45,4 @@ def write(filename, scidata_dict, ioformat=None, **kwargs) -> None:
     """
     module = _get_ioformat(ioformat)
     function = _writefunc(module, ioformats.get(ioformat))
-    return function(**kwargs)
+    return function(filename, scidata_dict, **kwargs)
