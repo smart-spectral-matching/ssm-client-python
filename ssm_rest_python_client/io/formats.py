@@ -1,24 +1,30 @@
 from importlib import import_module
 
-_MODULE_BASE='ssm_rest_python_client.io.'
+
+_MODULE_BASE = 'ssm_rest_python_client.io.'
+
 
 class UnknownFileTypeError(Exception):
     pass
 
-ioformats = { 
+
+ioformats = {
     'scidata-jsonld': 'scidata',
     'jcamp': 'jcamp'
 }
 
+
 def _get_ioformat(name):
     if name not in ioformats:
         raise UnknownFileTypeError(name)
-    module= _MODULE_BASE + ioformats[name]
+    module = _MODULE_BASE + ioformats[name]
     fmt = import_module(module)
     return fmt
 
+
 def _readfunc(module, name):
     return getattr(module, 'read_' + name)
+
 
 def _writefunc(module, name):
     return getattr(module, 'write_' + name)
@@ -32,6 +38,7 @@ def read(filename, ioformat=None, **kwargs) -> dict:
     function = _readfunc(module, ioformats.get(ioformat))
     return function(**kwargs)
 
+
 def write(filename, scidata_dict, ioformat=None, **kwargs) -> None:
     """
     Write SciData dict to file format
@@ -39,4 +46,3 @@ def write(filename, scidata_dict, ioformat=None, **kwargs) -> None:
     module = _get_ioformat(ioformat)
     function = _writefunc(module, ioformats.get(ioformat))
     return function(**kwargs)
-
