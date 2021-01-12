@@ -2,7 +2,7 @@
 ##JCAMP-DX= 4.24
 ##DATA TYPE= INELASTIC NEUTRON SCATTERING
 ##ORIGIN= TFXA, ISIS
-##OWNER= H. Jobic, Neutrons and Numerical Methods — N2M, (Eds. M. R. Johnson, G. J. Kearley, and H. G. Büttner) AIP Conf. Proc. Vol.479, 1999,  pp.183-186
+##OWNER= H. Jobic, Neutrons and Numerical Methods N2M, (Eds. M. R. Johnson, G. J. Kearley, and H. G. Buttner) AIP Conf. Proc. Vol.479, 1999,  pp.183-186
 ##NPOINTS= 1992
 ##XUNITS= 1/CM
 ##YUNITS= S(Q,w)
