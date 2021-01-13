@@ -130,30 +130,30 @@ def test_parse_duplicate_characters():
     assert jcamp._parse_duplicate_characters("9U") == "999"
 
 
-def test_parse_line():
+def test_parse_dataset_line():
     target = [99.0, 98.0, 97.0, 96.0, 98.0, 93.0]
 
     line = "99 98 97 96 98 93"
-    assert jcamp._parse_line(line) == target
+    assert jcamp._parse_dataset_line(line) == target
 
     line = "99,98,97,96,98,93"
-    assert jcamp._parse_line(line) == target
+    assert jcamp._parse_dataset_line(line) == target
 
     line = "99+98+97+96+98+93"
-    assert jcamp._parse_line(line) == target
+    assert jcamp._parse_dataset_line(line) == target
 
     line = "99I8I7I6I8I3"
-    assert jcamp._parse_line(line) == target
+    assert jcamp._parse_dataset_line(line) == target
 
     line = "99jjjKn"
-    assert jcamp._parse_line(line) == target
+    assert jcamp._parse_dataset_line(line) == target
 
     line = "99jUKn"
-    assert jcamp._parse_line(line) == target
+    assert jcamp._parse_dataset_line(line) == target
 
     line = "99 98 *"
     with pytest.raises(jcamp.UnknownCharacterException):
-        jcamp._parse_line(line)
+        jcamp._parse_dataset_line(line)
 
 
 def test_reader_hnmr(hnmr_ethanol_file):
@@ -180,11 +180,13 @@ def test_reader_hnmr(hnmr_ethanol_file):
     assert peaks.get('block_id') == 3
     assert peaks.get('data type') == "NMR SPECTRUM"
     assert peaks.get('data class') == "PEAK TABLE"
+    assert peaks.get(jcamp._DATA_XY_TYPE_KEY) == '(XY..XY)'
 
     xydata = children[3]
     assert xydata.get('block_id') == 4
     assert xydata.get('data type') == "NMR SPECTRUM"
     assert xydata.get('data class') == "XYDATA"
+    assert xydata.get(jcamp._DATA_XY_TYPE_KEY) == '(X++(Y..Y))'
 
 
 def test_reader_infrared(infrared_ethanol_file):
@@ -195,6 +197,7 @@ def test_reader_infrared(infrared_ethanol_file):
     assert jcamp_dict.get('title') == "ETHANOL"
     assert jcamp_dict.get('data type') == "INFRARED SPECTRUM"
     assert jcamp_dict.get('molform') == "C2 H6 O"
+    assert jcamp_dict.get(jcamp._DATA_XY_TYPE_KEY) == '(X++(Y..Y))'
 
 
 def test_reader_infrared_compressed(infrared_ethanol_compressed_file):
@@ -204,6 +207,7 @@ def test_reader_infrared_compressed(infrared_ethanol_compressed_file):
 
     assert jcamp_dict.get('title') == "$$ Begin of the data block"
     assert jcamp_dict.get('data type') == "INFRARED SPECTRUM"
+    assert jcamp_dict.get(jcamp._DATA_XY_TYPE_KEY) == '(X++(Y..Y))'
 
 
 def test_reader_infrared_compound(infrared_compound_file):
@@ -219,6 +223,7 @@ def test_reader_infrared_compound(infrared_compound_file):
 
     for child in children:
         assert child.get('data type') == "INFRARED SPECTRUM"
+        assert child.get(jcamp._DATA_XY_TYPE_KEY) == '(XY..XY)'
 
 
 def test_reader_infrared_multiline(infrared_multiline_file):
@@ -228,6 +233,7 @@ def test_reader_infrared_multiline(infrared_multiline_file):
 
     assert jcamp_dict.get('title') == "multiline datasets test"
     assert jcamp_dict.get('data type') == "INFRARED SPECTRUM"
+    assert jcamp_dict.get(jcamp._DATA_XY_TYPE_KEY) == '(X++(Y..Y))'
 
 
 def test_reader_mass(mass_ethanol_file):
@@ -238,6 +244,7 @@ def test_reader_mass(mass_ethanol_file):
     assert jcamp_dict.get('title') == "ethanol"
     assert jcamp_dict.get('data type') == "MASS SPECTRUM"
     assert jcamp_dict.get('data class') == "PEAK TABLE"
+    assert jcamp_dict.get(jcamp._DATA_XY_TYPE_KEY) == '(XY..XY)'
 
 
 def test_reader_neutron(neutron_emodine_file):
@@ -247,6 +254,7 @@ def test_reader_neutron(neutron_emodine_file):
 
     assert jcamp_dict.get('title') == "Emodine, C15H10O4"
     assert jcamp_dict.get('data type') == "INELASTIC NEUTRON SCATTERING"
+    assert jcamp_dict.get(jcamp._DATA_XY_TYPE_KEY) == '(X++(Y..Y))'
 
 
 def test_reader_raman(raman_tannic_acid_file):
@@ -256,9 +264,10 @@ def test_reader_raman(raman_tannic_acid_file):
 
     assert jcamp_dict.get('title') == "tannic acid"
     assert jcamp_dict.get('data type') == "RAMAN SPECTRUM"
+    assert jcamp_dict.get(jcamp._DATA_XY_TYPE_KEY) == '(XY..XY)'
 
 
-def test_read_uvvis(uvvis_toluene_file):
+def test_reader_uvvis(uvvis_toluene_file):
     with open(uvvis_toluene_file.absolute(), 'r') as fileobj:
         jcamp_dict = jcamp._reader(fileobj)
     xy_minmax_checker(jcamp_dict)
@@ -266,3 +275,9 @@ def test_read_uvvis(uvvis_toluene_file):
     assert jcamp_dict.get('title') == "Toluene"
     assert jcamp_dict.get('data type') == "UV/VIS SPECTRUM"
     assert jcamp_dict.get('molform') == "C7H8"
+    assert jcamp_dict.get(jcamp._DATA_XY_TYPE_KEY) == '(XY..XY)'
+
+
+def test_read_jcamp(infrared_ethanol_file):
+    scidata_dict = jcamp.read_jcamp(infrared_ethanol_file.absolute())
+    assert scidata_dict['@graph']['title'] == 'ETHANOL'

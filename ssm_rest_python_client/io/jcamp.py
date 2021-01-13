@@ -3,8 +3,26 @@ import re
 
 from .scidata import get_scidata_base
 
+_DATA_TYPE_KEY = "data type"
+_DATA_XY_TYPE_KEY = "xy data type"
+_DATA_XY_TYPES = ('xydata', 'xypoints', 'peak table')
+_DATA_LINK = "link"
+_CHILDREN = "children"
 
-# Compression encoding for JCAMP
+
+class UnknownCharacterException(Exception):
+    """Exception for unknown character in line of JCAMP-DX file"""
+
+
+class UnsupportedDataTypeConfigException(Exception):
+    """Exception for an unsupported data type configuration for parsing"""
+
+
+class MultiHeaderKeyException(Exception):
+    """Exception for finding multiple header keys in a single line"""
+
+
+# Compression encoding dictionaries for JCAMP
 # Reference found on following site under "Compression Table"
 #   - http://wwwchem.uwimona.edu.jm/software/jcampdx.html
 
@@ -71,14 +89,6 @@ DUP_digits = {
 }
 
 
-class UnknownCharacterException(Exception):
-    """Exception for unknown character in line of JCAMP-DX file"""
-
-
-class UnsupportedDataTypeConfigException(Exception):
-    """Exception for an unsupported data type configuration for parsing"""
-
-
 def _parse_duplicate_characters(line):
     """
     Parse duplicate character compression for a line (i.e. DUP characters).
@@ -108,7 +118,7 @@ def _parse_duplicate_characters(line):
     return "".join(new_line)
 
 
-def _parse_line(line):
+def _parse_dataset_line(line):
     """
     Parse a non-header line of the JCAMP-DX file format
 
@@ -158,7 +168,7 @@ def _parse_line(line):
             DIF = True
 
         else:
-            msg = f"Unknown character {char} encountered"
+            msg = f"Unknown character {char} encountered in line {line}"
             raise UnknownCharacterException(msg)
 
     if num:
@@ -170,6 +180,45 @@ def _parse_line(line):
     return values
 
 
+def _parse_header_line(line, datastart):
+    header_dict = {}
+
+    if line.startswith('##'):
+        # Get key-value from header line
+        line = line.strip('##')
+        (key, value) = line.split('=', 1)
+        key = key.strip().lower()
+        value = value.strip()
+
+        # Convert 'datatype' key -> _DATA_TYPE_KEY
+        if key == 'datatype' or key == 'data type':
+            key = _DATA_TYPE_KEY
+
+        # Detect compound files.
+        # See table XI in http://www.jcamp-dx.org/protocols/dxir01.pdf
+        if (key == _DATA_TYPE_KEY) and (value.lower() == _DATA_LINK):
+            header_dict[_CHILDREN] = []
+
+        # Put key-value into JCAMP header dictionary for output
+        if value.isdigit():
+            header_dict[key] = int(value)
+        elif _is_float(value):
+            header_dict[key] = float(value)
+        else:
+            header_dict[key] = value
+
+        # Figure out if we are starting a new data entry
+        if (key in _DATA_XY_TYPES):
+            datastart = True
+            header_dict[_DATA_XY_TYPE_KEY] = value
+        elif (key == 'end'):
+            datastart = True
+        elif datastart:
+            datastart = False
+
+    return header_dict, datastart
+
+
 def _reader(filehandle):
     jcamp_dict = {}
     xstart = []
@@ -177,11 +226,9 @@ def _reader(filehandle):
     y = []
     x = []
     datastart = False
-    is_compound = False
     in_compound_block = False
     compound_block_contents = []
-    re_num = re.compile(r'\d+')
-    lhs = None
+    last_key = None
     for line in filehandle:
         if not line.strip():
             continue
@@ -189,6 +236,7 @@ def _reader(filehandle):
             continue
 
         # Detect the start of a compound block
+        is_compound = _CHILDREN in jcamp_dict
         if is_compound and line.upper().startswith('##TITLE'):
             in_compound_block = True
             compound_block_contents = [line]
@@ -203,67 +251,53 @@ def _reader(filehandle):
             # Detect the end of the compound block.
             if line.upper().startswith('##END'):
                 # Process the entire block and put it into the children array.
-                jcamp_dict['children'].append(_reader(compound_block_contents))
+                jcamp_dict[_CHILDREN].append(_reader(compound_block_contents))
                 in_compound_block = False
                 compound_block_contents = []
             continue
 
-        # Lines beginning with '##' are header lines.
-        if line.startswith('##'):
-            line = line.strip('##')
-            (lhs, rhs) = line.split('=', 1)
-            lhs = lhs.strip().lower()
-            rhs = rhs.strip()
+        # Parse for a header line
+        header_dict, datastart = _parse_header_line(line, datastart)
 
-            # Convert 'datatype' key -> 'data type'
-            if lhs == 'datatype':
-                lhs = 'data type'
+        # Get the header key, stripping 'children' key if it is a compound file
+        remove_keys = (_CHILDREN, _DATA_XY_TYPE_KEY)
+        keys = [k for k in header_dict.keys() if k not in remove_keys]
+        if len(keys) > 1:
+            msg = f'Found multiple header keys: {keys}'
+            raise MultiHeaderKeyException(msg)
 
-            # Detect compound files.
-            # See table XI in http://www.jcamp-dx.org/protocols/dxir01.pdf
-            if (lhs == 'data type') and (rhs.lower() == 'link'):
-                is_compound = True
-                jcamp_dict['children'] = []
+        # Check if this is a multiline entry in the header
+        is_multiline = last_key and not line.startswith('##') and not datastart
+        if is_multiline:
+            jcamp_dict[last_key] += '\n{}'.format(line.strip())
 
-            if rhs.isdigit():
-                jcamp_dict[lhs] = int(rhs)
-            elif _is_float(rhs):
-                jcamp_dict[lhs] = float(rhs)
-            else:
-                jcamp_dict[lhs] = rhs
+        # Just do normal update of jcamp w/ header if not multiline
+        elif header_dict:
+            jcamp_dict.update(header_dict)
+            last_key = keys[0]
 
-            if (lhs in ('xydata', 'xypoints', 'peak table')):
-                # This is a new data entry, reset x and y.
-                x = []
-                y = []
-                datastart = True
-                datatype = rhs
-                continue        # data starts on next line
-            elif (lhs == 'end'):
-                bounds = [int(i) for i in re_num.findall(rhs)]
-                datastart = True
-                datatype = bounds
-                continue
-            elif datastart:
-                datastart = False
-        elif lhs is not None and not datastart:  # multiline entry
-            jcamp_dict[lhs] += '\n{}'.format(line.strip())
+        # This is a new data entry, reset x and y.
+        has_xy_data_types = any(set(_DATA_XY_TYPES) & set(header_dict.keys()))
+        if datastart and has_xy_data_types:
+            x = []
+            y = []
 
         has_points = 'xypoints' in jcamp_dict
         has_data = 'xydata' in jcamp_dict
         has_peak = 'peak table' in jcamp_dict
 
-        if datastart:
+        if datastart and not line.startswith('##'):
             has_points_or_data_or_peak = has_points or has_data or has_peak
 
-            if datatype == '(X++(Y..Y))':
-                datavals = _parse_line(line)
+            if jcamp_dict.get(_DATA_XY_TYPE_KEY) == '(X++(Y..Y))':
+                datavals = _parse_dataset_line(line)
                 xstart.append(float(datavals[0]))
                 xnum.append(len(datavals) - 1)
                 for dataval in datavals[1:]:
                     y.append(float(dataval))
 
-            elif has_points_or_data_or_peak and datatype == '(XY..XY)':
+            elif has_points_or_data_or_peak \
+                    and jcamp_dict.get(_DATA_XY_TYPE_KEY) == '(XY..XY)':
                 datavals = [v.strip() for v in re.split(r"[,;\s]", line) if v]
 
                 if not all(_is_float(datavals)):
@@ -274,10 +308,10 @@ def _reader(filehandle):
                 y.extend(datavals[1::2])
 
             else:
-                msg = f"Unable to parse setup for {datatype}"
+                msg = f"Unable to parse data: {jcamp_dict[_DATA_XY_TYPE_KEY]}"
                 raise UnsupportedDataTypeConfigException(msg)
 
-    if has_data and jcamp_dict['xydata'] == '(X++(Y..Y))':
+    if has_data and jcamp_dict.get(_DATA_XY_TYPE_KEY) == '(X++(Y..Y))':
         xstart.append(jcamp_dict['lastx'])
         x = np.array([])
         for n in range(len(xnum)-1):
@@ -347,6 +381,12 @@ def _is_float(s):
             return False
 
 
+def _add_dict_entry(scidata, jcamp, key):
+    if key in jcamp:
+        scidata[key] = jcamp[key]
+    return scidata
+
+
 def read_jcamp(filename):
     """
     Reader for JCAMP-DX files to SciData JSON-LD dictionary
@@ -360,10 +400,15 @@ def read_jcamp(filename):
     """
     # Extract jcamp file data
     with open(filename, 'r') as fileobj:
-        data = _reader(fileobj)
-    data['filename'] = filename
+        jcamp_dict = _reader(fileobj)
 
+    # Get a base SciData dict
     scidata_dict = get_scidata_base()
+
+    # Start translating the JCAMP dict -> SciData dict
+    graph = scidata_dict['@graph']
+    graph = _add_dict_entry(graph, jcamp_dict, 'title')
+    graph = _add_dict_entry(graph, jcamp_dict, 'title')
     return scidata_dict
 
 
