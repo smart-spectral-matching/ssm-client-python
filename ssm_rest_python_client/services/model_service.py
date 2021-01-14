@@ -54,7 +54,7 @@ class ModelService:
         Args:
             model (str): 64-character UUID to access a give model
 
-        Return:
+        Returns:
             endpoint (str): Models endpoint to use
         """
         endpoint = "{uri}/{datasets}/{dataset_uuid}/{models}".format(

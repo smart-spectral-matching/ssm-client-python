@@ -24,7 +24,7 @@ class DatasetService:
         Args:
             dataset (str): 64-character UUID to access a give dataset
 
-        Return:
+        Returns:
             endpoint (str): Datasets endpoint to use
         """
         endpoint = "{uri}/{dataset}".format(
