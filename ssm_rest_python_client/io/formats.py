@@ -9,8 +9,9 @@ class UnknownFileTypeError(Exception):
 
 
 ioformats = {
+    'jcamp': 'jcamp',
+    'rruff': 'rruff',
     'scidata-jsonld': 'scidata_jsonld',
-    'jcamp': 'jcamp'
 }
 
 

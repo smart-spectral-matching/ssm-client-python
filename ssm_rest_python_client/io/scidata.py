@@ -23,6 +23,22 @@ _DEFAULTS = {
     "@graph": {
         "@id": "",
         "@type": "sdo:scidataFramework",
+        "scidata": {
+            "@id": "scidata",
+            "@type": "sdo:scientificData",
+            "methodology": {
+                "@id": "methodology",
+                "@type": "sdo:methodology",
+            },
+            "system": {
+                "@id": "system/",
+                "@type": "sdo:system",
+            },
+            "dataset": {
+                "@id": "dataset/",
+                "@type": "sdo:dataset",
+            },
+        }
     }
 }
 
