@@ -50,7 +50,7 @@ clean-test: ## remove test and coverage artifacts
 lint: ## check style with flake8
 	flake8 ssm_rest_python_client tests
 
-lint-complex: ## check cyclomatic complexity with flake8 + mccabe
+lint-complexity: ## check cyclomatic complexity with flake8 + mccabe
 	flake8 --max-complexity 10 ssm_rest_python_client tests
 
 test: ## run tests quickly with the default Python
