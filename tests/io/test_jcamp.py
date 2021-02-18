@@ -126,6 +126,38 @@ def xy_minmax_checker(testdict):
 
 # Tests
 
+def test_is_float_true():
+    assert jcamp._is_float('0.09')
+    assert jcamp._is_float(['0.09'])
+    assert jcamp._is_float(['0.09', '10.0', '10'])
+
+
+def test_is_float():
+    assert not jcamp._is_float('cat')
+    assert jcamp._is_float(['cat']) == [False]
+    assert jcamp._is_float(['cat', 'x']) == [False, False]
+
+    mylist = ['cat', 'x', '2', '=', 'cats']
+    target = [False, False, True, False, False]
+    assert jcamp._is_float(mylist) == target
+
+    with pytest.raises(TypeError):
+        jcamp._is_float(0.09)
+
+    with pytest.raises(TypeError):
+        jcamp._is_float([0.09])
+
+    with pytest.raises(ValueError):
+        jcamp._is_float([])
+
+
+def test_parse_dataset_line():
+    line = ''
+    data_format = ''
+    with pytest.raises(jcamp.UnsupportedDataTypeConfigException):
+        jcamp._parse_dataset_line(line, data_format)
+
+
 def test_parse_dataset_duplicate_characters():
     assert jcamp._parse_dataset_duplicate_characters("9U") == "999"
 
@@ -154,6 +186,32 @@ def test_parse_dataset_line_single_x_multi_y():
     line = "99 98 *"
     with pytest.raises(jcamp.UnknownCharacterException):
         jcamp._parse_dataset_line_single_x_multi_y(line)
+
+
+def test_parse_header_line():
+    line = ''
+    input_dict = {}
+    jcamp_dict, start, last_key = jcamp._parse_header_line(line, input_dict)
+    assert jcamp_dict == {}
+    assert start is False
+    assert last_key is None
+
+    input_dict = {
+        'title': "ETHANOL",
+        'data type': "INFRARED SPECTRUM",
+        'molform': "C2 H6 O"
+    }
+    jcamp_dict, start, last_key = jcamp._parse_header_line(line, input_dict)
+    assert jcamp_dict == input_dict
+    assert start is False
+    assert last_key is None
+
+    line = "##XUNITS= 1/CM"
+    jcamp_dict, start, last_key = jcamp._parse_header_line(line, input_dict)
+    input_dict.update({'xunits': '1/CM'})
+    assert jcamp_dict == input_dict
+    assert start is False
+    assert last_key == 'xunits'
 
 
 def test_reader_hnmr(hnmr_ethanol_file):

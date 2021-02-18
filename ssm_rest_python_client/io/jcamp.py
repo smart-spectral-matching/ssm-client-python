@@ -247,7 +247,7 @@ def _parse_dataset_line(line, data_format):
     """
     if data_format not in _DATA_FORMATS:
         msg = f'Data format {data_format} not supported type: {_DATA_FORMATS}'
-        raise Exception(msg)
+        raise UnsupportedDataTypeConfigException(msg)
 
     if data_format == _DATA_FORMAT_XYXY:
         values = [v.strip() for v in re.split(r"[,;\s]", line) if v]
@@ -333,7 +333,10 @@ def _parse_header_line(line, jcamp_dict, datastart=False, last_key=None):
     Raises:
         MultiHeaderKeyException: If multiple header keys parsed (should be one)
     """
+    output_dict = dict(jcamp_dict)
     header_dict, datastart = _parse_header_get_dict(line, datastart)
+    print('header_dict')
+    print(header_dict)
 
     # Get the header key, stripping 'children' key if it is a compound file
     remove_keys = (_CHILDREN, _DATA_XY_TYPE_KEY)
@@ -345,14 +348,16 @@ def _parse_header_line(line, jcamp_dict, datastart=False, last_key=None):
     # Check if this is a multiline entry in the header
     is_multiline = last_key and not line.startswith('##') and not datastart
     if is_multiline:
-        jcamp_dict[last_key] += '\n{}'.format(line.strip())
+        output_dict[last_key] += '\n{}'.format(line.strip())
 
     # Just do normal update of jcamp w/ header if not multiline
     elif header_dict:
-        jcamp_dict.update(header_dict)
+        output_dict.update(header_dict)
         last_key = keys[0]
+        print('output_dict')
+        print(output_dict)
 
-    return jcamp_dict, datastart, last_key
+    return output_dict, datastart, last_key
 
 
 def _reader(filehandle):
