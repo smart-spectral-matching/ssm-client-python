@@ -8,7 +8,6 @@ Welcome to ssm-rest-python-client's documentation!
    readme
    installation
    usage
-   modules
    contributing
    authors
    history
