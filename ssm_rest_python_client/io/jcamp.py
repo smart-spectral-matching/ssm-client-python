@@ -479,7 +479,7 @@ def read_jcamp(filename):
     """
     Reader for JCAMP-DX files to SciData JSON-LD dictionary
     JCAMP-DX is Joint Committee on Atomic and Molecular Physical Data eXchange
-        JCAMP-DX URL:  http://jcamp-dx.org/
+    JCAMP-DX URL:  http://jcamp-dx.org/
 
     Args:
         filename (str): Filename to read from for JCAMP-DX files
@@ -504,7 +504,7 @@ def write_jcamp(filename, scidata_dict):
     """
     Writer for SciData JSON-LD dictionary to JCAMP-DX files.
     JCAMP-DX is Joint Committee on Atomic and Molecular Physical Data eXchange
-        JCAMP-DX URL:  http://jcamp-dx.org/
+    JCAMP-DX URL:  http://jcamp-dx.org/
 
     Args:
         filename (str): Filename for JCAMP-DX file

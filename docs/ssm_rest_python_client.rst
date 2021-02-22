@@ -8,6 +8,8 @@ Subpackages
    :maxdepth: 4
 
    ssm_rest_python_client.containers
+   ssm_rest_python_client.io
+   ssm_rest_python_client.services
 
 Submodules
 ----------
