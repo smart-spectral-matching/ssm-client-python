@@ -335,8 +335,6 @@ def _parse_header_line(line, jcamp_dict, datastart=False, last_key=None):
     """
     output_dict = dict(jcamp_dict)
     header_dict, datastart = _parse_header_get_dict(line, datastart)
-    print('header_dict')
-    print(header_dict)
 
     # Get the header key, stripping 'children' key if it is a compound file
     remove_keys = (_CHILDREN, _DATA_XY_TYPE_KEY)
@@ -354,8 +352,6 @@ def _parse_header_line(line, jcamp_dict, datastart=False, last_key=None):
     elif header_dict:
         output_dict.update(header_dict)
         last_key = keys[0]
-        print('output_dict')
-        print(output_dict)
 
     return output_dict, datastart, last_key
 
