@@ -939,7 +939,5 @@ def write_jcamp(filename, scidata_dict):
         filename (str): Filename for JCAMP-DX file
         scidata_dict (dict): SciData JSON-LD dictionary to write out
     """
-    import json
-    print(json.dumps(scidata_dict, indent=2))
     with open(filename, 'w') as fileobj:
         fileobj.write("hello")
