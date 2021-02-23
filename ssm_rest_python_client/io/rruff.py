@@ -42,7 +42,16 @@ def _reader(filehandle):
 
 
 def _get_graph_section(rruff_dict):
-    # Start translating the JCAMP dict -> SciData dict
+    """
+    Extract and translate from the RRUFF dictionary the SciData JSON-LD
+    '@graph' section
+
+    Args:
+        rruff_dict (dict): RRUFF dictionary to extract graph section from
+    Return:
+        graph (dict): '@graph' section of SciData JSON-LD from translation
+    """
+    # Start translating the RRUFF dict -> SciData dict
     graph = {}
     graph = _copy_from_dict_to_dict(rruff_dict, "names", graph, "title")
     graph = _copy_from_dict_to_dict(rruff_dict, "owner", graph, "publisher")
@@ -100,6 +109,15 @@ def _get_graph_section(rruff_dict):
 
 
 def _get_methodology_section(rruff_dict):
+    """
+    Extract and translate from the RRUFF dictionary the SciData JSON-LD
+    'methodology' section
+
+    Args:
+        rruff_dict (dict): RRUFF dictionary to extract methodology section from
+    Return:
+        graph (dict): 'methodology' section of SciData JSON-LD from translation
+    """
     methodology = {}
     methodology["evaluation"] = ["experimental"]
 
@@ -350,8 +368,14 @@ def _get_dataset_section(rruff_dict):
 
 
 def _translate_rruff_to_scidata(rruff_dict):
-    # Get a base SciData dict
+    """
+    Main translation of RRUFF to SciData JSON-LD
 
+    Args:
+        rruff_dict (dict): RRUFF dictionary extracted from read
+    Returns:
+        scidata_dict (dict): SciDat JSON-LD from translation
+    """
     scidata_dict = get_scidata_base()
 
     graph = _get_graph_section(rruff_dict)
