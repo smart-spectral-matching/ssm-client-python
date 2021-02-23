@@ -151,6 +151,23 @@ def test_is_float():
         jcamp._is_float([])
 
 
+def test_num_dif_factory():
+    # space character
+    num, DIF = jcamp._num_dif_factory(' ', '')
+    assert num == ''
+    assert DIF is False
+
+    # SQZ digits character
+    num, DIF = jcamp._num_dif_factory('A', '')
+    assert num == '+1'
+    assert DIF is False
+
+    # DIF digits character
+    num, DIF = jcamp._num_dif_factory('n', '')
+    assert num == '-5'
+    assert DIF is True
+
+
 def test_parse_dataset_line():
     target = [99.0, 98.0, 97.0, 96.0, 98.0, 93.0]
     line = "99 98 97 96 98 93"
