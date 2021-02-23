@@ -11,6 +11,9 @@ _DATA_XY_TYPE_KEY = "xy data type"
 _DATA_XY_TYPES = ('xydata', 'xypoints', 'peak table')
 _DATA_LINK = "link"
 _CHILDREN = "children"
+_XUNIT_MAP = {
+    "1/CM": "qudt:PER-CentiM"
+}
 
 
 class UnknownCharacterException(Exception):
@@ -471,6 +474,442 @@ def _copy_from_dict_to_dict(dict_a, key_a, dict_b, key_b):
     return dict_b
 
 
+def _get_graph_section(jcamp_dict):
+    """
+    Extract and translate from the JCAMP-DX dictionary the SciData JSON-LD
+    '@graph' section
+
+    Args:
+        jcamp_dict (dict): JCAMP-DX dictionary to extract graph section from
+    Return:
+        graph (dict): '@graph' section of SciData JSON-LD from translation
+    """
+    # Start translating the JCAMP dict -> SciData dict
+    graph = {}
+    graph = _copy_from_dict_to_dict(jcamp_dict, "title", graph, "title")
+    graph = _copy_from_dict_to_dict(jcamp_dict, "origin", graph, "publisher")
+    graph = _copy_from_dict_to_dict(jcamp_dict, "date", graph, "generatedAt")
+
+    # Description
+    description = ""
+    description_keywords = [
+        "jcamp-dx",
+        "class",
+        "cas registry no",
+        "sample description",
+    ]
+    for key in description_keywords:
+        if key in jcamp_dict:
+            value = jcamp_dict.get(key)
+            description += f'{key.upper()}: {value} '
+    graph = _copy_from_dict_to_dict(
+            {"description": description}, "description",
+            graph, "description")
+
+    # Authors
+    graph['author'] = []
+    author_keywords = ["owner", "$ref author"]
+    for author_keyword in author_keywords:
+        if author_keyword in jcamp_dict:
+            graph['author'].append({
+                "@id": "author/{}".format(len(graph['author']) + 1),
+                "@type": "dc:creator",
+                "name": jcamp_dict[author_keyword]
+            })
+
+    # Sources / references
+    sources = []
+
+    citation = []
+    if "$ref author" in jcamp_dict:
+        citation.append(f'{jcamp_dict["$ref author"]} :')
+    if "$ref title" in jcamp_dict:
+        citation.append(f'{jcamp_dict["$ref title"]}.')
+    if "$ref journal" in jcamp_dict:
+        citation.append(f'{jcamp_dict["$ref journal"]} ')
+    if "$ref volume" in jcamp_dict:
+        citation.append(f'{jcamp_dict["$ref volume"]}')
+    if "$ref date" in jcamp_dict:
+        citation.append(f'({jcamp_dict["$ref date"]})')
+    if "$ref page" in jcamp_dict:
+        citation.append(f'{jcamp_dict["$ref page"]}')
+
+    if citation:
+        sources.append({
+            "@id": f'source/{len(sources) + 1}',
+            "@type": "dc:source",
+            "citation": ' '.join(citation),
+            "reftype": "journal article",
+            "doi": "",
+            "url": ""
+        })
+
+    if "source reference" in jcamp_dict:
+        sources.append({
+            "@id": f'source/{len(sources) + 1}',
+            "@type": "dc:source",
+            "citation": jcamp_dict.get("source reference"),
+        })
+
+    if sources:
+        graph["sources"] = sources
+
+    return graph
+
+
+def _get_methodology_section(jcamp_dict):
+    """
+    Extract and translate from the JCAMP-DX dictionary the SciData JSON-LD
+    'methodology' section
+
+    Args:
+        jcamp_dict (dict): JCAMP-DX dictionary to extract methodology
+                           section from
+    Return:
+        methodology (dict): 'methodology' section of SciData JSON-LD
+                            from translation
+    """
+    methodology = {}
+    methodology["evaluation"] = ["experimental"]
+
+    measurement = {}
+    if "spectrometer/data system" in jcamp_dict:
+        measurement = {
+            "@id": "measurement/1/",
+            "@type": "sdo:measurement",
+            "techniqueType": "cao:spectroscopy",
+            "instrument":  f'{jcamp_dict.get("spectrometer/data system")}',
+        }
+
+    settings = []
+    if "instrument parameters" in jcamp_dict:
+        settings.append({
+            "@id": f'setting/{len(settings) + 1}',
+            "@type": "sdo:setting",
+            "value": {
+                "@id": f'setting/{len(settings) + 1}/value',
+                "number": jcamp_dict.get("instrument parameters"),
+            }
+        })
+
+    if "path length" in jcamp_dict:
+        settings.append({
+            "@id": f'setting/{len(settings) + 1}',
+            "@type": "sdo:setting",
+            "quantity": "length",
+            "property": "path length",
+            "value": {
+                "@id": f'setting/{len(settings) + 1}/value',
+                "number": jcamp_dict.get("path length"),
+                "unitref": "qudt:CentiM",
+            }
+        })
+
+    if settings:
+        measurement["settings"] = settings
+
+    aspects = []
+    if measurement:
+        aspects.append(measurement)
+        methodology["aspects"] = aspects
+
+    return methodology
+
+
+def _get_system_section(jcamp_dict):
+    """
+    Extract and translate from the JCAMP-DX dictionary the SciData JSON-LD
+    'system' section
+
+    Args:
+        jcamp_dict (dict): JCAMP-DX dictionary to extract system
+                           section from
+    Return:
+        system (dict): 'system' section of SciData JSON-LD from translation
+    """
+
+    system = {}
+    system["discipline"] = "w3i:Chemistry"
+    system["subdiscipline"] = "w3i:AnalyticalChemistry"
+
+    facets = []
+    compound_dict = {}
+    if "molform" in jcamp_dict or "cas registry no" in jcamp_dict:
+        compound_dict = {
+            "@id": "compound/1/",
+            "@type": ["sdo:facet", "sdo:material"]
+        }
+        compound_dict = _copy_from_dict_to_dict(
+            jcamp_dict, "title",
+            compound_dict, "name")
+        compound_dict = _copy_from_dict_to_dict(
+            jcamp_dict, "molform",
+            compound_dict, "formula")
+        compound_dict = _copy_from_dict_to_dict(
+            jcamp_dict, "cas registry no",
+            compound_dict, "casrn")
+
+        facets.append(compound_dict)
+
+    substances_dict = {}
+    if "state" in jcamp_dict:
+        substances_dict = {
+            "@id": "substance/1/",
+            "@type": ["sdo:constituent"],
+        }
+        substances_dict = _copy_from_dict_to_dict(
+            jcamp_dict, "title",
+            substances_dict, "name")
+        substances_dict = _copy_from_dict_to_dict(
+            jcamp_dict, "state",
+            substances_dict, "phase")
+
+        facets.append(substances_dict)
+
+    if facets:
+        system["facets"] = facets
+
+    return system
+
+
+def _get_datagroup_subsection(jcamp_dict):
+    xunits = jcamp_dict.get("xunits", "")
+    xunitref = _XUNIT_MAP.get(xunits)
+
+    datagroup = [
+        {
+            "@id": "datagroup/1/",
+            "@type": "sdo:datagroup",
+            "type": "spectrum",
+            "attributes": [
+                {
+                    "@id": "attribute/1/",
+                    "@type": "sdo:attribute",
+                    "quantity": "count",
+                    "property": "Number of Data Points",
+                    "value": {
+                        "@id": "attribute/1/value/",
+                        "@type": "sdo:value",
+                        "number": str(len(jcamp_dict['x'])),
+                    }
+                },
+                {
+                    "@id": "attribute/2/",
+                    "@type": "sdo:attribute",
+                    "quantity": "metric",
+                    "property": "First X-axis Value",
+                    "value": {
+                        "@id": "attribute/2/value/",
+                        "@type": "sdo:value",
+                        "number": str(jcamp_dict['x'][0]),
+                        "unitref": xunitref,
+                    }
+                },
+                {
+                    "@id": "attribute/3/",
+                    "@type": "sdo:attribute",
+                    "quantity": "metric",
+                    "property": "Last X-axis Value",
+                    "value": {
+                        "@id": "attribute/3/value/",
+                        "@type": "sdo:value",
+                        "number": str(jcamp_dict['x'][-1]),
+                        "unitref": xunitref,
+                    }
+                },
+                {
+                    "@id": "attribute/4/",
+                    "@type": "sdo:attribute",
+                    "quantity": "metric",
+                    "property": "Minimum X-axis Value",
+                    "value": {
+                        "@id": "attribute/4/value/",
+                        "@type": "sdo:value",
+                        "number": str(min(jcamp_dict['x'])),
+                        "unitref": xunitref,
+                    }
+                },
+                {
+                    "@id": "attribute/5/",
+                    "@type": "sdo:attribute",
+                    "quantity": "metric",
+                    "property": "Maximum X-axis Value",
+                    "value": {
+                        "@id": "attribute/5/value/",
+                        "@type": "sdo:value",
+                        "number": str(max(jcamp_dict['x'])),
+                        "unitref": xunitref,
+                    }
+                },
+                {
+                    "@id": "attribute/6/",
+                    "@type": "sdo:attribute",
+                    "quantity": "metric",
+                    "property": "First Y-axis Value",
+                    "value": {
+                        "@id": "attribute/6/value/",
+                        "@type": "sdo:value",
+                        "number": str(jcamp_dict['y'][0]),
+                    }
+                },
+                {
+                    "@id": "attribute/7/",
+                    "@type": "sdo:attribute",
+                    "quantity": "metric",
+                    "property": "Last Y-axis Value",
+                    "value": {
+                        "@id": "attribute/7/value/",
+                        "@type": "sdo:value",
+                        "number": str(jcamp_dict['y'][-1]),
+                    }
+                },
+                {
+                    "@id": "attribute/8/",
+                    "@type": "sdo:attribute",
+                    "quantity": "metric",
+                    "property": "Minimum Y-axis Value",
+                    "value": {
+                        "@id": "attribute/8/value/",
+                        "@type": "sdo:value",
+                        "number": str(min(jcamp_dict['y'])),
+                    }
+                },
+                {
+                    "@id": "attribute/9/",
+                    "@type": "sdo:attribute",
+                    "quantity": "metric",
+                    "property": "Maximum Y-axis Value",
+                    "value": {
+                        "@id": "attribute/9/value/",
+                        "@type": "sdo:value",
+                        "number": str(max(jcamp_dict['y'])),
+                    }
+                },
+                {
+                    "@id": "attribute/10",
+                    "@type": "sdo:attribute",
+                    "quantity": "metric",
+                    "property": "X-axis Scaling Factor",
+                    "value": {
+                        "@id": "attribute/10/value/",
+                        "@type": "sdo:value",
+                        "number": f'{jcamp_dict.get("xfactor", "1")}'
+                    }
+                },
+                {
+                    "@id": "attribute/11/",
+                    "@type": "sdo:attribute",
+                    "quantity": "metric",
+                    "property": "Y-axis Scaling Factor",
+                    "value": {
+                        "@id": "attribute/11/value/",
+                        "@type": "sdo:value",
+                        "number": f'{jcamp_dict.get("yfactor", "1")}'
+                    }
+                },
+            ],
+            "dataserieses": [
+                "dataseries/1/",
+                "dataseries/2/"
+            ]
+        }
+    ]
+    return datagroup
+
+
+def _get_dataseries_subsection(jcamp_dict):
+    xunits = jcamp_dict.get("xunits", "")
+    xunitref = _XUNIT_MAP.get(xunits)
+
+    dataseries = [
+        {
+            "@id": "dataseries/1/",
+            "@type": "sdo:independent",
+            "label": "Wave Numbers (cm^-1)",
+            "axis": "x-axis",
+            "parameter": {
+                "@id": "dataseries/1/parameter/",
+                "@type": "sdo:parameter",
+                "quantity": "wavenumbers",
+                "property": "Wave Numbers",
+                "valuearray": {
+                    "@id": "dataseries/1/parameter/valuearray/",
+                    "@type": "sdo:valuearray",
+                    "datatype": "decimal",
+                    "numberarray": jcamp_dict['x'],
+                    "unitref": xunitref,
+                }
+            }
+        },
+        {
+            "@id": "dataseries/2/",
+            "@type": "sdo:dependent",
+            "label": "Intensity (Arbitrary Units)",
+            "axis": "y-axis",
+            "parameter": {
+                "@id": "dataseries/2/parameter/",
+                "@type": "sdo:parameter",
+                "quantity": "intensity",
+                "property": "Intensity",
+                "valuearray": {
+                    "@id": "dataseries/2/parameter/valuearray/",
+                    "@type": "sdo:valuearray",
+                    "datatype": "decimal",
+                    "numberarray": jcamp_dict['y']
+                }
+            }
+        }
+    ]
+
+    return dataseries
+
+
+def _get_dataset_section(jcamp_dict):
+    dataset = {}
+    dataset["source"] = "measurement/1"
+    dataset["scope"] = "material/1"
+
+    datagroup = _get_datagroup_subsection(jcamp_dict)
+    dataseries = _get_dataseries_subsection(jcamp_dict)
+
+    dataset.update({
+        "datagroup": datagroup,
+        "dataseries": dataseries,
+    })
+
+    return dataset
+
+
+def _translate_jcamp_to_scidata(jcamp_dict):
+    """
+    Main translation of JCAMP-DX to SciData JSON-LD
+
+    Args:
+        jcamp_dict (dict): JCAMP-DX dictionary extracted from read
+    Returns:
+        scidata_dict (dict): SciDat JSON-LD from translation
+    """
+    scidata_dict = get_scidata_base()
+
+    graph = _get_graph_section(jcamp_dict)
+    scidata_dict["@graph"].update(graph)
+
+    scidata_dict["@graph"]["scidata"]["type"] = ["property value"]
+    data_type = jcamp_dict.get("data type")
+    scidata_dict["@graph"]["scidata"]["property"] = [data_type]
+
+    methodology = _get_methodology_section(jcamp_dict)
+    scidata_dict["@graph"]["scidata"]["methodology"].update(methodology)
+
+    system = _get_system_section(jcamp_dict)
+    scidata_dict["@graph"]["scidata"]["system"].update(system)
+
+    dataset = _get_dataset_section(jcamp_dict)
+    scidata_dict["@graph"]["scidata"]["dataset"].update(dataset)
+
+    return scidata_dict
+
+
 def read_jcamp(filename):
     """
     Reader for JCAMP-DX files to SciData JSON-LD dictionary
@@ -486,13 +925,7 @@ def read_jcamp(filename):
     # Extract jcamp file data
     with open(filename, 'r') as fileobj:
         jcamp_dict = _reader(fileobj)
-
-    # Get a base SciData dict
-    scidata_dict = get_scidata_base()
-
-    # Start translating the JCAMP dict -> SciData dict
-    graph = scidata_dict['@graph']
-    graph = _copy_from_dict_to_dict(jcamp_dict, 'title', graph, 'title')
+    scidata_dict = _translate_jcamp_to_scidata(jcamp_dict)
     return scidata_dict
 
 
@@ -506,4 +939,7 @@ def write_jcamp(filename, scidata_dict):
         filename (str): Filename for JCAMP-DX file
         scidata_dict (dict): SciData JSON-LD dictionary to write out
     """
-    pass
+    import json
+    print(json.dumps(scidata_dict, indent=2))
+    with open(filename, 'w') as fileobj:
+        fileobj.write("hello")

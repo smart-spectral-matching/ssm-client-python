@@ -2,7 +2,7 @@ import numpy as np
 import pathlib
 import pytest
 
-from ssm_rest_python_client.io import jcamp
+from ssm_rest_python_client.io import jcamp, scidata
 from tests import TEST_DATA_DIR
 
 
@@ -338,4 +338,91 @@ def test_reader_uvvis(uvvis_toluene_file):
 
 def test_read_jcamp(infrared_ethanol_file):
     scidata_dict = jcamp.read_jcamp(infrared_ethanol_file.absolute())
-    assert scidata_dict['@graph']['title'] == 'ETHANOL'
+    graph = scidata_dict.get('@graph')
+    assert graph['title'] == 'ETHANOL'
+    assert graph['publisher'] == 'DOW CHEMICAL COMPANY'
+    assert graph['generatedAt'] == 1964
+
+    # Check description has all the keywords from JCAMP file
+    description = graph.get("description")
+    for jcamp_keyword in ["JCAMP-DX", "COBLENTZ"]:
+        assert jcamp_keyword in description
+
+    assert len(graph["author"]) == 1
+    assert graph["author"][0]["name"].startswith("COBLENTZ SOCIETY")
+
+    import json
+    print(json.dumps(scidata_dict, indent=2))
+
+    # Methodology
+    methodology = scidata_dict["@graph"]["scidata"]["methodology"]
+    target = scidata._DEFAULTS["@graph"]["scidata"]["methodology"]
+    assert methodology["@id"] == target["@id"]
+    assert methodology["@type"] == target["@type"]
+    assert len(methodology["evaluation"]) == 1
+    assert methodology["evaluation"] == ["experimental"]
+    assert len(methodology["aspects"]) == 1
+    aspects = methodology["aspects"]
+    assert len(aspects[0]["settings"]) == 2
+    grating = aspects[0]["settings"][0]["value"]["number"]
+    assert grating == "GRATING CHANGED AT 5.0, 7.5, 15.0 MICRON"
+    assert aspects[0]["settings"][1]["quantity"] == "length"
+    assert aspects[0]["settings"][1]["property"] == "path length"
+    path_length = aspects[0]["settings"][1]["value"]["number"]
+    assert path_length == "5 CM"
+    unitref = aspects[0]["settings"][1]["value"]["unitref"]
+    assert unitref == "qudt:CentiM"
+
+    # System
+    system = scidata_dict["@graph"]["scidata"]["system"]
+    target = scidata._DEFAULTS["@graph"]["scidata"]["system"]
+    assert system["@id"] == target["@id"]
+    assert system["@type"] == target["@type"]
+    assert system["discipline"] == "w3i:Chemistry"
+    assert system["subdiscipline"] == "w3i:AnalyticalChemistry"
+    assert len(system["facets"]) == 2
+    compound_facet = system["facets"][0]
+    assert compound_facet["@id"] == "compound/1/"
+    assert len(compound_facet["@type"]) == 2
+    assert compound_facet["formula"] == "C2 H6 O"
+    assert compound_facet["casrn"] == "64-17-5"
+    assert compound_facet["name"] == "ETHANOL"
+    substance_facet = system["facets"][1]
+    assert substance_facet["@id"] == "substance/1/"
+    assert len(substance_facet["@type"]) == 1
+    assert substance_facet["name"] == "ETHANOL"
+    assert substance_facet["phase"] == "GAS"
+
+    # Dataset
+    dataset = scidata_dict["@graph"]["scidata"]["dataset"]
+    target = scidata._DEFAULTS["@graph"]["scidata"]["dataset"]
+    assert dataset["@id"] == target["@id"]
+    assert dataset["@type"] == target["@type"]
+    assert len(dataset) == 6
+    assert dataset["source"] == "measurement/1"
+    assert dataset["scope"] == "material/1"
+    assert len(dataset["datagroup"]) == 1
+    attributes = dataset["datagroup"][0]["attributes"]
+    assert len(attributes) == 11
+    assert attributes[0]["property"] == "Number of Data Points"
+    assert attributes[0]["value"]["number"] == "3570"
+    assert attributes[1]["property"] == "First X-axis Value"
+    assert attributes[1]["value"]["number"] == "461.563"
+    assert attributes[2]["property"] == "Last X-axis Value"
+    assert attributes[2]["value"]["number"] == "3807.5"
+    assert attributes[3]["property"] == "Minimum X-axis Value"
+    assert attributes[3]["value"]["number"] == "461.563"
+    assert attributes[4]["property"] == "Maximum X-axis Value"
+    assert attributes[4]["value"]["number"] == "3807.5"
+    assert attributes[5]["property"] == "First Y-axis Value"
+    assert attributes[5]["value"]["number"] == "0.966"
+    assert attributes[6]["property"] == "Last Y-axis Value"
+    assert attributes[6]["value"]["number"] == "1.0"
+    assert attributes[7]["property"] == "Minimum Y-axis Value"
+    assert attributes[7]["value"]["number"] == "0.142"
+    assert attributes[8]["property"] == "Maximum Y-axis Value"
+    assert attributes[8]["value"]["number"] == "1.024"
+    assert attributes[9]["property"] == "X-axis Scaling Factor"
+    assert attributes[9]["value"]["number"] == "1.0"
+    assert attributes[10]["property"] == "Y-axis Scaling Factor"
+    assert attributes[10]["value"]["number"] == "1"
