@@ -12,7 +12,13 @@ _DATA_XY_TYPES = ('xydata', 'xypoints', 'peak table')
 _DATA_LINK = "link"
 _CHILDREN = "children"
 _XUNIT_MAP = {
-    "1/CM": "qudt:PER-CentiM"
+    "1/CM": "qudt:PER-CentiM",
+}
+_PRESSURE_UNIT_MAP = {
+    "mmHg": "qudt:MilliM_HG",
+}
+_LENGTH_UNIT_MAP = {
+    "cm": "qudt:CentiM",
 }
 
 
@@ -497,6 +503,7 @@ def _get_graph_section(jcamp_dict):
         "class",
         "cas registry no",
         "sample description",
+        "xydata"
     ]
     for key in description_keywords:
         if key in jcamp_dict:
@@ -551,6 +558,18 @@ def _get_graph_section(jcamp_dict):
             "citation": jcamp_dict.get("source reference"),
         })
 
+    if "$nist source" in jcamp_dict or "$nist image" in jcamp_dict:
+        citation = ""
+        if "$nist source" in jcamp_dict:
+            citation += f'NIST SOURCE: {jcamp_dict.get("$nist source")}, '
+        if "$nist image" in jcamp_dict:
+            citation += f'NIST IMAGE: {jcamp_dict.get("$nist image")}, '
+        sources.append({
+            "@id": f'source/{len(sources) + 1}',
+            "@type": "dc:source",
+            "citation": citation,
+        })
+
     if sources:
         graph["sources"] = sources
 
@@ -593,6 +612,9 @@ def _get_methodology_section(jcamp_dict):
         })
 
     if "path length" in jcamp_dict:
+        pl_value = jcamp_dict.get("path length").split(" ")[0]
+        pl_unit = jcamp_dict.get("path length").split(" ")[1]
+        pl_unitref = _LENGTH_UNIT_MAP.get(pl_unit.lower())
         settings.append({
             "@id": f'setting/{len(settings) + 1}',
             "@type": "sdo:setting",
@@ -600,8 +622,20 @@ def _get_methodology_section(jcamp_dict):
             "property": "path length",
             "value": {
                 "@id": f'setting/{len(settings) + 1}/value',
-                "number": jcamp_dict.get("path length"),
-                "unitref": "qudt:CentiM",
+                "number": pl_value,
+                "unitref": pl_unitref,
+            }
+        })
+
+    if "resolution" in jcamp_dict:
+        settings.append({
+            "@id": f'setting/{len(settings) + 1}',
+            "@type": "sdo:setting",
+            "quantity": "resolution",
+            "property": "Resolution",
+            "value": {
+                "@id": f'setting/{len(settings) + 1}/value',
+                "number": jcamp_dict.get("resolution"),
             }
         })
 
@@ -611,6 +645,22 @@ def _get_methodology_section(jcamp_dict):
     aspects = []
     if measurement:
         aspects.append(measurement)
+    if "sampling procedure" in jcamp_dict:
+        sampling_procedure = {
+            "@id": "procedure/1",
+            "@type": "sdo:resource",
+            "description": jcamp_dict.get("sampling procedure")
+        }
+        aspects.append(sampling_procedure)
+    if "data processing" in jcamp_dict:
+        data_processing_procedure = {
+            "@id": "procedure/2",
+            "@type": "sdo:resource",
+            "description": jcamp_dict.get("data processing")
+        }
+        aspects.append(data_processing_procedure)
+
+    if aspects:
         methodology["aspects"] = aspects
 
     return methodology
@@ -666,6 +716,25 @@ def _get_system_section(jcamp_dict):
 
         facets.append(substances_dict)
 
+    if "partial_pressure" in jcamp_dict:
+        pp_value = jcamp_dict.get("partial_pressure").split(" ")[0]
+        pp_unit = jcamp_dict.get("partial_pressure").split(" ")[1]
+        pp_unitref = _PRESSURE_UNIT_MAP.get(pp_unit)
+        condition_dict = {
+            "@id": "condition/1/",
+            "@type": ["sdo:condition"],
+            "quantity": "pressure",
+            "property": "Partial pressure",
+            "value": {
+                "@id": "condition/1/value",
+                "@type": "sdo:value",
+                "number": pp_value,
+                "unitref": pp_unitref
+            }
+        }
+
+        facets.append(condition_dict)
+
     if facets:
         system["facets"] = facets
 
@@ -675,6 +744,8 @@ def _get_system_section(jcamp_dict):
 def _get_datagroup_subsection(jcamp_dict):
     xunits = jcamp_dict.get("xunits", "")
     xunitref = _XUNIT_MAP.get(xunits)
+
+    yunitref = jcamp_dict.get("yunits", "")
 
     datagroup = [
         {
@@ -750,6 +821,7 @@ def _get_datagroup_subsection(jcamp_dict):
                         "@id": "attribute/6/value/",
                         "@type": "sdo:value",
                         "number": str(jcamp_dict['y'][0]),
+                        "unitref": yunitref,
                     }
                 },
                 {
@@ -761,6 +833,7 @@ def _get_datagroup_subsection(jcamp_dict):
                         "@id": "attribute/7/value/",
                         "@type": "sdo:value",
                         "number": str(jcamp_dict['y'][-1]),
+                        "unitref": yunitref,
                     }
                 },
                 {
@@ -772,6 +845,7 @@ def _get_datagroup_subsection(jcamp_dict):
                         "@id": "attribute/8/value/",
                         "@type": "sdo:value",
                         "number": str(min(jcamp_dict['y'])),
+                        "unitref": yunitref,
                     }
                 },
                 {
@@ -783,6 +857,7 @@ def _get_datagroup_subsection(jcamp_dict):
                         "@id": "attribute/9/value/",
                         "@type": "sdo:value",
                         "number": str(max(jcamp_dict['y'])),
+                        "unitref": yunitref,
                     }
                 },
                 {
@@ -912,6 +987,8 @@ def _translate_jcamp_to_scidata(jcamp_dict):
 
 def _get_description_section(desc, section):
     results = [x for x in desc.split(',') if x.strip().startswith(section)]
+    if not results:
+        return None
     element = results[0]
     value = element.split(':')[1].strip()
     return value
@@ -946,24 +1023,113 @@ def write_jcamp(filename, scidata_dict):
         filename (str): Filename for JCAMP-DX file
         scidata_dict (dict): SciData JSON-LD dictionary to write out
     """
+    # Main graph
     graph = scidata_dict.get("@graph")
+    description = graph.get("description", "")
+    jcamp_dx = _get_description_section(description, "JCAMP-DX")
+    the_class = _get_description_section(description, "CLASS")
+    xydata = _get_description_section(description, "XYDATA")
+
+    nist_description = ""
+    for source in graph.get("sources"):
+        if source.get("citation", "").startswith("NIST"):
+            nist_description = source.get("citation")
+
+    if nist_description:
+        nist_source = _get_description_section(
+            nist_description,
+            "NIST SOURCE")
+        nist_image = _get_description_section(
+            nist_description,
+            "NIST IMAGE")
+
+    sources = graph.get("sources")
+    scidata = graph.get("scidata")
+
+    # Methodology
+    methodology = scidata.get("methodology")
+    aspects = methodology.get("aspects")
+    measurement = aspects[0]
+    procedure = aspects[1]
+    processing = aspects[2]
+    instrument = measurement.get("instrument")
+    settings = measurement.get("settings")
+    parameters = settings[0]["value"]["number"]
+    resolution = settings[2]["value"]["number"]
+
+    # System
+    system = scidata.get("system")
+
+    casrn = system["facets"][0]["casrn"]
+    formula = system["facets"][0]["formula"]
+    phase = system["facets"][1]["phase"]
+
+    reverse_pressure_map = {v: k for k, v in _PRESSURE_UNIT_MAP.items()}
+    scidata_punit = system["facets"][2]["value"]["unitref"]
+    jcamp_punit = reverse_pressure_map[scidata_punit]
+    partial_pressure = f'{system["facets"][2]["value"]["number"]} '
+    partial_pressure += f'{jcamp_punit}'
+
+    reverse_length_map = {v: k for k, v in _LENGTH_UNIT_MAP.items()}
+    scidata_path_unit = settings[1]["value"]["unitref"]
+    jcamp_path_unit = reverse_length_map[scidata_path_unit]
+    path_length = f'{settings[1]["value"]["number"]} '
+    path_length += f'{jcamp_path_unit.upper()}'
+
+    # Dataset
+    dataset = scidata.get("dataset")
+
+    attributes = dataset["datagroup"][0]["attributes"]
+
+    reverse_xunit_map = {v: k for k, v in _XUNIT_MAP.items()}
+    scidata_xunits = attributes[1]["value"]["unitref"]
+    xunits = reverse_xunit_map[scidata_xunits]
+
+    yunits = attributes[5]["value"]["unitref"]
+    xfactor = attributes[9]["value"]["number"]
+    yfactor = attributes[10]["value"]["number"]
+    first_x = attributes[1]["value"]["number"]
+    last_x = attributes[2]["value"]["number"]
+    first_y = attributes[5]["value"]["number"]
+    max_x = attributes[4]["value"]["number"]
+    min_x = attributes[3]["value"]["number"]
+    max_y = attributes[8]["value"]["number"]
+    min_y = attributes[7]["value"]["number"]
+    npoints = attributes[0]["value"]["number"]
+    delta_x = (float(last_x) - float(first_x)) / (float(npoints) - 1)
+
     with open(filename, 'w') as fileobj:
         fileobj.write(f'##TITLE={graph.get("title")}\n')
-
-        description = graph.get("description", "")
-        jcamp_dx = _get_description_section(description, "JCAMP-DX")
-        the_class = _get_description_section(description, "CLASS")
-
-        sources = graph.get("sources")
-        scidata = graph.get("scidata")
-        system = scidata.get("system")
-
         fileobj.write(f'##JCAMP-DX={jcamp_dx}\n')
         fileobj.write(f'##DATA TYPE={graph["scidata"]["property"][0]}\n')
         fileobj.write(f'##CLASS={the_class}\n')
         fileobj.write(f'##ORIGIN={graph["publisher"]}\n')
         fileobj.write(f'##OWNER={graph["author"][0]["name"]}\n')
         fileobj.write(f'##DATE={graph["generatedAt"]}\n')
-        fileobj.write(f'##CAS REGISTRY NO={system["facets"][0]["casrn"]}\n')
-        fileobj.write(f'##MOLFORM={system["facets"][0]["formula"]}\n')
+        fileobj.write(f'##CAS REGISTRY NO={casrn}\n')
+        fileobj.write(f'##MOLFORM={formula}\n')
         fileobj.write(f'##SOURCE REFERENCE={sources[0]["citation"]}\n')
+        fileobj.write(f'##$NIST SOURCE={nist_source}\n')
+        fileobj.write(f'##$NIST IMAGE={nist_image}\n')
+        fileobj.write(f'##SPECTROMETER/DATA SYSTEM={instrument}\n')
+        fileobj.write(f'##INSTRUMENT PARAMETERS={parameters}\n')
+        fileobj.write(f'##STATE={phase}\n')
+        fileobj.write(f'##PARTIAL_PRESSURE={partial_pressure}\n')
+        fileobj.write(f'##PATH LENGTH={path_length}\n')
+        fileobj.write(f'##SAMPLING PROCEDURE={procedure["description"]}\n')
+        fileobj.write(f'##RESOLUTION={resolution}\n')
+        fileobj.write(f'##DATA PROCESSING={processing["description"]}\n')
+        fileobj.write(f'##XUNITS={xunits}\n')
+        fileobj.write(f'##YUNITS={yunits}\n')
+        fileobj.write(f'##XFACTOR={xfactor}\n')
+        fileobj.write(f'##YFACTOR={yfactor}\n')
+        fileobj.write(f'##DELTAX={delta_x:.6f}\n')
+        fileobj.write(f'##FIRSTX={first_x}\n')
+        fileobj.write(f'##LASTX={last_x}\n')
+        fileobj.write(f'##FIRSTY={first_y}\n')
+        fileobj.write(f'##MAXX={max_x}\n')
+        fileobj.write(f'##MINX={min_x}\n')
+        fileobj.write(f'##MAXY={max_y}\n')
+        fileobj.write(f'##MINY={min_y}\n')
+        fileobj.write(f'##NPOINTS={npoints}\n')
+        fileobj.write(f'##XYDATA={xydata}\n')

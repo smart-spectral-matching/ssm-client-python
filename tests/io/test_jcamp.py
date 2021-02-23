@@ -364,15 +364,15 @@ def test_read_jcamp(infrared_ethanol_file):
     assert methodology["@type"] == target["@type"]
     assert len(methodology["evaluation"]) == 1
     assert methodology["evaluation"] == ["experimental"]
-    assert len(methodology["aspects"]) == 1
+    assert len(methodology["aspects"]) == 3
     aspects = methodology["aspects"]
-    assert len(aspects[0]["settings"]) == 2
+    assert len(aspects[0]["settings"]) == 3
     grating = aspects[0]["settings"][0]["value"]["number"]
     assert grating == "GRATING CHANGED AT 5.0, 7.5, 15.0 MICRON"
     assert aspects[0]["settings"][1]["quantity"] == "length"
     assert aspects[0]["settings"][1]["property"] == "path length"
     path_length = aspects[0]["settings"][1]["value"]["number"]
-    assert path_length == "5 CM"
+    assert path_length == "5"
     unitref = aspects[0]["settings"][1]["value"]["unitref"]
     assert unitref == "qudt:CentiM"
 
@@ -383,7 +383,7 @@ def test_read_jcamp(infrared_ethanol_file):
     assert system["@type"] == target["@type"]
     assert system["discipline"] == "w3i:Chemistry"
     assert system["subdiscipline"] == "w3i:AnalyticalChemistry"
-    assert len(system["facets"]) == 2
+    assert len(system["facets"]) == 3
     compound_facet = system["facets"][0]
     assert compound_facet["@id"] == "compound/1/"
     assert len(compound_facet["@type"]) == 2
@@ -428,10 +428,10 @@ def test_read_jcamp(infrared_ethanol_file):
     assert attributes[9]["property"] == "X-axis Scaling Factor"
     assert attributes[9]["value"]["number"] == "1.0"
     assert attributes[10]["property"] == "Y-axis Scaling Factor"
-    assert attributes[10]["value"]["number"] == "1"
+    assert attributes[10]["value"]["number"] == "1.0"
 
 
-def test_write_jcamp(tmp_path, infrared_ethanol_file):
+def test_write_infrared(tmp_path, infrared_ethanol_file):
     scidata_dict = jcamp.read_jcamp(infrared_ethanol_file.absolute())
     jcamp_dir = tmp_path / "jcamp"
     jcamp_dir.mkdir()
