@@ -214,6 +214,12 @@ def test_parse_header_line():
     assert last_key == 'xunits'
 
 
+def test_get_description_section():
+    description = "CAT: meow, DOG: bark"
+    assert jcamp._get_description_section(description, "CAT") == "meow"
+    assert jcamp._get_description_section(description, "DOG") == "bark"
+
+
 def test_reader_hnmr(hnmr_ethanol_file):
     with open(hnmr_ethanol_file.absolute(), 'r') as fileobj:
         jcamp_dict = jcamp._reader(fileobj)
@@ -351,9 +357,6 @@ def test_read_jcamp(infrared_ethanol_file):
     assert len(graph["author"]) == 1
     assert graph["author"][0]["name"].startswith("COBLENTZ SOCIETY")
 
-    import json
-    print(json.dumps(scidata_dict, indent=2))
-
     # Methodology
     methodology = scidata_dict["@graph"]["scidata"]["methodology"]
     target = scidata._DEFAULTS["@graph"]["scidata"]["methodology"]
@@ -426,3 +429,12 @@ def test_read_jcamp(infrared_ethanol_file):
     assert attributes[9]["value"]["number"] == "1.0"
     assert attributes[10]["property"] == "Y-axis Scaling Factor"
     assert attributes[10]["value"]["number"] == "1"
+
+
+def test_write_jcamp(tmp_path, infrared_ethanol_file):
+    scidata_dict = jcamp.read_jcamp(infrared_ethanol_file.absolute())
+    jcamp_dir = tmp_path / "jcamp"
+    jcamp_dir.mkdir()
+    filename = jcamp_dir / "infrared_ethanol.rruff"
+    jcamp.write_jcamp(filename.absolute(), scidata_dict)
+    assert filename.read_text() == infrared_ethanol_file.read_text()

@@ -501,7 +501,7 @@ def _get_graph_section(jcamp_dict):
     for key in description_keywords:
         if key in jcamp_dict:
             value = jcamp_dict.get(key)
-            description += f'{key.upper()}: {value} '
+            description += f'{key.upper()}: {value}, '
     graph = _copy_from_dict_to_dict(
             {"description": description}, "description",
             graph, "description")
@@ -910,6 +910,13 @@ def _translate_jcamp_to_scidata(jcamp_dict):
     return scidata_dict
 
 
+def _get_description_section(desc, section):
+    results = [x for x in desc.split(',') if x.strip().startswith(section)]
+    element = results[0]
+    value = element.split(':')[1].strip()
+    return value
+
+
 def read_jcamp(filename):
     """
     Reader for JCAMP-DX files to SciData JSON-LD dictionary
@@ -939,5 +946,24 @@ def write_jcamp(filename, scidata_dict):
         filename (str): Filename for JCAMP-DX file
         scidata_dict (dict): SciData JSON-LD dictionary to write out
     """
+    graph = scidata_dict.get("@graph")
     with open(filename, 'w') as fileobj:
-        fileobj.write("hello")
+        fileobj.write(f'##TITLE={graph.get("title")}\n')
+
+        description = graph.get("description", "")
+        jcamp_dx = _get_description_section(description, "JCAMP-DX")
+        the_class = _get_description_section(description, "CLASS")
+
+        sources = graph.get("sources")
+        scidata = graph.get("scidata")
+        system = scidata.get("system")
+
+        fileobj.write(f'##JCAMP-DX={jcamp_dx}\n')
+        fileobj.write(f'##DATA TYPE={graph["scidata"]["property"][0]}\n')
+        fileobj.write(f'##CLASS={the_class}\n')
+        fileobj.write(f'##ORIGIN={graph["publisher"]}\n')
+        fileobj.write(f'##OWNER={graph["author"][0]["name"]}\n')
+        fileobj.write(f'##DATE={graph["generatedAt"]}\n')
+        fileobj.write(f'##CAS REGISTRY NO={system["facets"][0]["casrn"]}\n')
+        fileobj.write(f'##MOLFORM={system["facets"][0]["formula"]}\n')
+        fileobj.write(f'##SOURCE REFERENCE={sources[0]["citation"]}\n')
