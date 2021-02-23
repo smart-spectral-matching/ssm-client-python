@@ -173,6 +173,42 @@ def _parse_dataset_duplicate_characters(line):
     return "".join(new_line)
 
 
+def _num_dif_factory(char, line):
+    """
+    Helper utility factory function to `parse_dataset_line_single_x_multi_y`
+    to use the current character to give the next numeric value
+    and flag if we are processing using DIF compression.
+
+    Args:
+        char (str): Character we are currently processing.
+        line (str): Line we are processing, used for raising exception.
+
+    Returns:
+        (num, DIF) (tuple): Updated values for numeric character and DIF flag.
+
+    Raises:
+        UnkownCharacterException: If we find a character that is neither
+            a valid compression character or number.
+    """
+    if char == ' ':
+        num = ''
+        DIF = False
+
+    elif char in SQZ_digits:
+        num = SQZ_digits[char]
+        DIF = False
+
+    elif char in DIF_digits:
+        num = str(DIF_digits[char])
+        DIF = True
+
+    else:
+        msg = f"Unknown character {char} encountered in line {line}"
+        raise UnknownCharacterException(msg)
+
+    return (num, DIF)
+
+
 def _parse_dataset_line_single_x_multi_y(line):
     """
     Parse a JCAMP data line when using the format '(X++(Y..Y))',
@@ -203,33 +239,15 @@ def _parse_dataset_line_single_x_multi_y(line):
     for char in line:
         if char.isdigit() or char == '.':
             num += char
+            continue
 
-        elif char == ' ':
-            if num:
-                value = float(num)
-                values.append(value)
-            num = ''
-            DIF = False
+        if num:
+            value = float(num)
+            if DIF:
+                value = float(num) + values[-1]
+            values.append(value)
 
-        elif char in SQZ_digits:
-            if num:
-                value = float(num)
-                values.append(value)
-            num = SQZ_digits[char]
-            DIF = False
-
-        elif char in DIF_digits:
-            if num:
-                value = float(num)
-                if DIF:
-                    value = float(num) + values[-1]
-                values.append(value)
-            num = str(DIF_digits[char])
-            DIF = True
-
-        else:
-            msg = f"Unknown character {char} encountered in line {line}"
-            raise UnknownCharacterException(msg)
+        num, DIF = _num_dif_factory(char, line)
 
     if num:
         value = float(num)
@@ -365,7 +383,61 @@ def _parse_header_line(line, jcamp_dict, datastart=False, last_key=None):
     return output_dict, datastart, last_key
 
 
+def _post_process_data_xy(jcamp_dict, x, y, xstart, xnum):
+    """
+    Utility function for _reader to format the XY data in a
+    post-process manner after we parse out this data from the file.
+
+    Args:
+        jcamp_dict (dict): JCAMP dictionary parsed from file
+        x (list): X-axis data
+        y (list): Y-axis data
+        xstart (list): Starting X-axis values for multi-datasets
+        xnum (list): Number of starting X-axis value for multi-datasets
+
+    Returns:
+        (x, y) (tuple): Post-processed XY data
+    """
+    if jcamp_dict.get(_DATA_XY_TYPE_KEY) == _DATA_FORMAT_XYYY:
+        xstart.append(jcamp_dict['lastx'])
+        x = np.array([])
+        for n in range(len(xnum)-1):
+            dx = (xstart[n+1] - xstart[n]) / xnum[n]
+            x = np.append(x, xstart[n]+(dx*np.arange(xnum[n])))
+
+        if (xnum[len(xnum)-1] > 1):
+            numerator = (jcamp_dict['lastx'] - xstart[len(xnum)-1])
+            denominator = (xnum[len(xnum)-1] - 1.0)
+            dx = numerator / denominator
+
+            xnext = xstart[len(xnum)-1]+(dx*np.arange(xnum[len(xnum)-1]))
+            x = np.append(x, xnext)
+        else:
+            x = np.append(x, jcamp_dict['lastx'])
+
+        y = np.array([float(yval) for yval in y])
+
+    else:
+        x = np.array([float(xval) for xval in x])
+        y = np.array([float(yval) for yval in y])
+
+    if ('xfactor' in jcamp_dict):
+        x = x * jcamp_dict['xfactor']
+    if ('yfactor' in jcamp_dict):
+        y = y * jcamp_dict['yfactor']
+    return x, y
+
+
 def _reader(filehandle):
+    """
+    File reader for JCAMP-DX file format
+
+    Args:
+        filehandle (list): JCAMP-DX file to read from
+
+    Returns:
+        jcamp_dict (dict): Dictionary parsed from JCAMP-DX file
+    """
     jcamp_dict = dict()
     xstart = []
     xnum = []
@@ -428,34 +500,7 @@ def _reader(filehandle):
                 raise UnsupportedDataTypeConfigException(msg)
 
     # ===================================
-    if jcamp_dict.get(_DATA_XY_TYPE_KEY) == _DATA_FORMAT_XYYY:
-        xstart.append(jcamp_dict['lastx'])
-        x = np.array([])
-        for n in range(len(xnum)-1):
-            dx = (xstart[n+1] - xstart[n]) / xnum[n]
-            x = np.append(x, xstart[n]+(dx*np.arange(xnum[n])))
-
-        if (xnum[len(xnum)-1] > 1):
-            numerator = (jcamp_dict['lastx'] - xstart[len(xnum)-1])
-            denominator = (xnum[len(xnum)-1] - 1.0)
-            dx = numerator / denominator
-
-            xnext = xstart[len(xnum)-1]+(dx*np.arange(xnum[len(xnum)-1]))
-            x = np.append(x, xnext)
-        else:
-            x = np.append(x, jcamp_dict['lastx'])
-
-        y = np.array([float(yval) for yval in y])
-
-    else:
-        x = np.array([float(xval) for xval in x])
-        y = np.array([float(yval) for yval in y])
-
-    if ('xfactor' in jcamp_dict):
-        x = x * jcamp_dict['xfactor']
-    if ('yfactor' in jcamp_dict):
-        y = y * jcamp_dict['yfactor']
-
+    x, y = _post_process_data_xy(jcamp_dict, x, y, xstart, xnum)
     jcamp_dict['x'] = list(x)
     jcamp_dict['y'] = list(y)
 
@@ -478,6 +523,77 @@ def _copy_from_dict_to_dict(dict_a, key_a, dict_b, key_b):
     if key_a in dict_a:
         dict_b[key_b] = dict_a[key_a]
     return dict_b
+
+
+def _get_graph_source_citation_section(jcamp_dict):
+    """
+    Extract and translate from the JCAMP-DX dictionary the SciData JSON-LD
+    citations in the 'sources' section from the '@graph' scection.
+
+    Args:
+        jcamp_dict (dict): JCAMP-DX dictionary to extract citations from
+    Return:
+        citations (list): citations from SciData JSON-LD
+    """
+    citation = []
+    if "$ref author" in jcamp_dict:
+        citation.append(f'{jcamp_dict["$ref author"]} :')
+    if "$ref title" in jcamp_dict:
+        citation.append(f'{jcamp_dict["$ref title"]}.')
+    if "$ref journal" in jcamp_dict:
+        citation.append(f'{jcamp_dict["$ref journal"]} ')
+    if "$ref volume" in jcamp_dict:
+        citation.append(f'{jcamp_dict["$ref volume"]}')
+    if "$ref date" in jcamp_dict:
+        citation.append(f'({jcamp_dict["$ref date"]})')
+    if "$ref page" in jcamp_dict:
+        citation.append(f'{jcamp_dict["$ref page"]}')
+    return citation
+
+
+def _get_graph_source_section(jcamp_dict):
+    """
+    Extract and translate from the JCAMP-DX dictionary the SciData JSON-LD
+    'sources' section from the '@graph' scection.
+
+    Args:
+        jcamp_dict (dict): JCAMP-DX dictionary to extract sources section from
+    Return:
+        sources (list): 'sources' section of SciData JSON-LD from translation
+    """
+    sources = []
+
+    citation = _get_graph_source_citation_section(jcamp_dict)
+    if citation:
+        sources.append({
+            "@id": f'source/{len(sources) + 1}',
+            "@type": "dc:source",
+            "citation": ' '.join(citation),
+            "reftype": "journal article",
+            "doi": "",
+            "url": ""
+        })
+
+    if "source reference" in jcamp_dict:
+        sources.append({
+            "@id": f'source/{len(sources) + 1}',
+            "@type": "dc:source",
+            "citation": jcamp_dict.get("source reference"),
+        })
+
+    if "$nist source" in jcamp_dict or "$nist image" in jcamp_dict:
+        citation = ""
+        if "$nist source" in jcamp_dict:
+            citation += f'NIST SOURCE: {jcamp_dict.get("$nist source")}, '
+        if "$nist image" in jcamp_dict:
+            citation += f'NIST IMAGE: {jcamp_dict.get("$nist image")}, '
+        sources.append({
+            "@id": f'source/{len(sources) + 1}',
+            "@type": "dc:source",
+            "citation": citation,
+        })
+
+    return sources
 
 
 def _get_graph_section(jcamp_dict):
@@ -527,50 +643,7 @@ def _get_graph_section(jcamp_dict):
             })
 
     # Sources / references
-    sources = []
-
-    citation = []
-    if "$ref author" in jcamp_dict:
-        citation.append(f'{jcamp_dict["$ref author"]} :')
-    if "$ref title" in jcamp_dict:
-        citation.append(f'{jcamp_dict["$ref title"]}.')
-    if "$ref journal" in jcamp_dict:
-        citation.append(f'{jcamp_dict["$ref journal"]} ')
-    if "$ref volume" in jcamp_dict:
-        citation.append(f'{jcamp_dict["$ref volume"]}')
-    if "$ref date" in jcamp_dict:
-        citation.append(f'({jcamp_dict["$ref date"]})')
-    if "$ref page" in jcamp_dict:
-        citation.append(f'{jcamp_dict["$ref page"]}')
-
-    if citation:
-        sources.append({
-            "@id": f'source/{len(sources) + 1}',
-            "@type": "dc:source",
-            "citation": ' '.join(citation),
-            "reftype": "journal article",
-            "doi": "",
-            "url": ""
-        })
-
-    if "source reference" in jcamp_dict:
-        sources.append({
-            "@id": f'source/{len(sources) + 1}',
-            "@type": "dc:source",
-            "citation": jcamp_dict.get("source reference"),
-        })
-
-    if "$nist source" in jcamp_dict or "$nist image" in jcamp_dict:
-        citation = ""
-        if "$nist source" in jcamp_dict:
-            citation += f'NIST SOURCE: {jcamp_dict.get("$nist source")}, '
-        if "$nist image" in jcamp_dict:
-            citation += f'NIST IMAGE: {jcamp_dict.get("$nist image")}, '
-        sources.append({
-            "@id": f'source/{len(sources) + 1}',
-            "@type": "dc:source",
-            "citation": citation,
-        })
+    sources = _get_graph_source_section(jcamp_dict)
 
     if sources:
         graph["sources"] = sources
@@ -1000,6 +1073,199 @@ def _get_description_section(desc, section):
     return value
 
 
+def _add_header_lines_general(scidata_dict):
+    graph = scidata_dict.get("@graph")
+    description = graph.get("description", "")
+    jcamp_dx = _get_description_section(description, "JCAMP-DX")
+    lines = []
+    lines.append(f'##JCAMP-DX={jcamp_dx}\n')
+    lines.append(f'##DATA TYPE={graph["scidata"]["property"][0]}\n')
+    lines.append(f'##ORIGIN={graph["publisher"]}\n')
+    lines.append(f'##OWNER={graph["author"][0]["name"]}\n')
+
+    date_and_time = graph.get("generatedAt").split("-")
+    date = date_and_time[0].strip()
+    lines.append(f'##DATE={date}\n')
+
+    if len(date_and_time) > 1:
+        time = date_and_time[1].strip()
+        lines.append(f'##TIME={time}\n')
+
+    the_class = _get_description_section(description, "CLASS")
+    if the_class:
+        lines.append(f'##CLASS={the_class}\n')
+
+    sources = graph.get("sources")
+    if sources:
+        citation = graph.get("sources")[0]["citation"]
+        lines.append(f'##SOURCE REFERENCE={citation}\n')
+
+        for source in sources:
+            nist_description = source.get("citation", "")
+            if nist_description.startswith("NIST"):
+                nist_source = _get_description_section(
+                    nist_description,
+                    "NIST SOURCE")
+                lines.append(f'##$NIST SOURCE={nist_source}\n')
+
+                nist_image = _get_description_section(
+                    nist_description,
+                    "NIST IMAGE")
+                lines.append(f'##$NIST IMAGE={nist_image}\n')
+
+    return lines
+
+
+def _add_header_lines_methodology(scidata_dict):
+    lines = []
+    scidata = scidata_dict.get("@graph").get("scidata")
+    methodology = scidata.get("methodology")
+
+    # Aspects
+    aspects = methodology.get("aspects")
+    measurement = ""
+    for aspect in aspects:
+        if aspect.get("@id").startswith("procedure"):
+            lines.append(f'##SAMPLING PROCEDURE={aspect["description"]}\n')
+
+        if aspect.get("@id").startswith("resource"):
+            lines.append(f'##DATA PROCESSING={aspect["description"]}\n')
+
+        if aspect.get("@id").startswith("measurement"):
+            measurement = aspect
+            instrument = measurement.get("instrument")
+            lines.append(f'##SPECTROMETER/DATA SYSTEM={instrument}\n')
+
+    # Settings
+    settings = measurement.get("settings", "")
+    for setting in settings:
+        if setting.get("property").startswith("instrument parameters"):
+            parameters = setting["value"]["number"]
+            lines.append(f'##INSTRUMENT PARAMETERS={parameters}\n')
+        if setting.get("property").startswith("path length"):
+            reverse_length_map = {v: k for k, v in _LENGTH_UNIT_MAP.items()}
+            scidata_path_unit = settings[1]["value"]["unitref"]
+            jcamp_path_unit = reverse_length_map[scidata_path_unit]
+            path_length = f'{settings[1]["value"]["number"]} '
+            path_length += f'{jcamp_path_unit.upper()}'
+            lines.append(f'##PATH LENGTH={path_length}\n')
+        if setting.get("property").startswith("resolution"):
+            resolution = setting["value"]["number"]
+            lines.append(f'##RESOLUTION={resolution}\n')
+
+    return lines
+
+
+def _add_header_lines_system(scidata_dict):
+    lines = []
+    scidata = scidata_dict.get("@graph").get("scidata")
+    system = scidata.get("system")
+
+    # Facets
+    facets = system.get("facets")
+    if facets:
+        for facet in facets:
+            if facet.get("@id").startswith("compound"):
+                if "casrn" in facet:
+                    lines.append(f'##CAS REGISTRY NO={facet["casrn"]}\n')
+
+                if "formula" in facet:
+                    lines.append(f'##MOLFORM={facet["formula"]}\n')
+
+            if facet.get("@id").startswith("substance"):
+                if "phase" in facet:
+                    lines.append(f'##STATE={facet["phase"]}\n')
+
+            if facet.get("@id").startswith("condition"):
+                items = _PRESSURE_UNIT_MAP.items()
+                reverse_pressure_map = {v: k for k, v in items}
+                scidata_punit = facet["value"]["unitref"]
+                jcamp_punit = reverse_pressure_map[scidata_punit]
+                partial_pressure = f'{facet["value"]["number"]} '
+                partial_pressure += f'{jcamp_punit}'
+                lines.append(f'##PARTIAL_PRESSURE={partial_pressure}\n')
+
+    return lines
+
+
+def _add_header_lines_dataset(scidata_dict):
+    lines = []
+
+    scidata = scidata_dict.get("@graph").get("scidata")
+    dataset = scidata.get("dataset")
+
+    attributes = dataset["datagroup"][0]["attributes"]
+
+    reverse_xunit_map = {v: k for k, v in _XUNIT_MAP.items()}
+    scidata_xunits = attributes[1]["value"]["unitref"]
+    xunits = reverse_xunit_map[scidata_xunits]
+
+    yunits = attributes[5]["value"]["unitref"]
+    xfactor = attributes[9]["value"]["number"]
+    yfactor = attributes[10]["value"]["number"]
+    first_x = attributes[1]["value"]["number"]
+    last_x = attributes[2]["value"]["number"]
+    first_y = attributes[5]["value"]["number"]
+    max_x = attributes[4]["value"]["number"]
+    min_x = attributes[3]["value"]["number"]
+    max_y = attributes[8]["value"]["number"]
+    min_y = attributes[7]["value"]["number"]
+    npoints = attributes[0]["value"]["number"]
+    delta_x = (float(last_x) - float(first_x)) / (float(npoints) - 1)
+
+    lines.append(f'##XUNITS={xunits}\n')
+    lines.append(f'##YUNITS={yunits}\n')
+    lines.append(f'##XFACTOR={xfactor}\n')
+    lines.append(f'##YFACTOR={yfactor}\n')
+    lines.append(f'##DELTAX={delta_x:.6f}\n')
+    lines.append(f'##FIRSTX={first_x}\n')
+    lines.append(f'##LASTX={last_x}\n')
+    lines.append(f'##FIRSTY={first_y}\n')
+    lines.append(f'##MAXX={max_x}\n')
+    lines.append(f'##MINX={min_x}\n')
+    lines.append(f'##MAXY={max_y}\n')
+    lines.append(f'##MINY={min_y}\n')
+    lines.append(f'##NPOINTS={npoints}\n')
+
+    description = scidata_dict.get("@graph").get("description")
+    xydata = _get_description_section(description, "XYDATA")
+    lines.append(f'##XYDATA={xydata}\n')
+
+    return lines
+
+
+def _write_header(filename, scidata_dict, mode='w'):
+    lines = []
+
+    graph = scidata_dict.get("@graph")
+    lines.append(f'##TITLE={graph.get("title")}\n')
+
+    lines += _add_header_lines_general(scidata_dict)
+    lines += _add_header_lines_methodology(scidata_dict)
+    lines += _add_header_lines_system(scidata_dict)
+    lines += _add_header_lines_dataset(scidata_dict)
+
+    with open(filename, mode) as fileobj:
+        for line in lines:
+            fileobj.write(line)
+
+
+def _write_data(filename, scidata_dict, mode='w'):
+    dataset = scidata_dict.get("@graph").get("scidata").get("dataset")
+    dataseries = dataset.get("dataseries")
+    with open(filename, mode) as fileobj:
+        xdata = []
+        ydata = []
+        for data in dataseries:
+            if data.get("axis") == "x-axis":
+                xdata = data["parameter"]["valuearray"]["numberarray"]
+            if data.get("axis") == "y-axis":
+                ydata = data["parameter"]["valuearray"]["numberarray"]
+
+        for x, y in zip(xdata, ydata):
+            fileobj.write(f' {x:.3f},   {y:.3f}\n')
+
+
 def read_jcamp(filename):
     """
     Reader for JCAMP-DX files to SciData JSON-LD dictionary
@@ -1029,185 +1295,7 @@ def write_jcamp(filename, scidata_dict):
         filename (str): Filename for JCAMP-DX file
         scidata_dict (dict): SciData JSON-LD dictionary to write out
     """
-    # Main graph
-    graph = scidata_dict.get("@graph")
-    description = graph.get("description", "")
-    jcamp_dx = _get_description_section(description, "JCAMP-DX")
-    the_class = _get_description_section(description, "CLASS")
-    xydata = _get_description_section(description, "XYDATA")
-    date_and_time = graph.get("generatedAt").split("-")
-    date = date_and_time[0].strip()
-    time = ""
-    if len(date_and_time) > 1:
-        time = date_and_time[1].strip()
-
-    nist_description = ""
-    sources = graph.get("sources")
-    if sources:
-        for source in sources:
-            if source.get("citation", "").startswith("NIST"):
-                nist_description = source.get("citation")
-
-    nist_source = ""
-    nist_image = ""
-    if nist_description:
-        nist_source = _get_description_section(
-            nist_description,
-            "NIST SOURCE")
-        nist_image = _get_description_section(
-            nist_description,
-            "NIST IMAGE")
-
-    sources = graph.get("sources")
-    scidata = graph.get("scidata")
-
-    # Methodology
-    methodology = scidata.get("methodology")
-
-    aspects = methodology.get("aspects")
-    measurement = ""
-    procedure = ""
-    resource = ""
-    for aspect in aspects:
-        if aspect.get("@id").startswith("measurement"):
-            measurement = aspect
-        if aspect.get("@id").startswith("procedure"):
-            procedure = aspect
-        if aspect.get("@id").startswith("resource"):
-            resource = aspects
-
-    instrument = ""
-    if measurement:
-        instrument = measurement.get("instrument")
-
-    settings = measurement.get("settings", "")
-    parameters = ""
-    path_length = ""
-    resolution = ""
-    for setting in settings:
-        if setting.get("property").startswith("instrument parameters"):
-            parameters = setting["value"]["number"]
-        if setting.get("property").startswith("path length"):
-            reverse_length_map = {v: k for k, v in _LENGTH_UNIT_MAP.items()}
-            scidata_path_unit = settings[1]["value"]["unitref"]
-            jcamp_path_unit = reverse_length_map[scidata_path_unit]
-            path_length = f'{settings[1]["value"]["number"]} '
-            path_length += f'{jcamp_path_unit.upper()}'
-        if setting.get("property").startswith("resolution"):
-            resolution = setting["value"]["number"]
-
-    # System
-    system = scidata.get("system")
-    facets = system.get("facets")
-
-    casrn = ""
-    formula = ""
-    phase = ""
-    partial_pressure = ""
-    if facets:
-        for facet in facets:
-            if facet.get("@id").startswith("compound"):
-                if "casrn" in facet:
-                    casrn = facet["casrn"]
-                if "formula" in facet:
-                    formula = facet["formula"]
-            if facet.get("@id").startswith("substance"):
-                if "phase" in facet:
-                    phase = facet["phase"]
-
-            if facet.get("@id").startswith("condition"):
-                items = _PRESSURE_UNIT_MAP.items()
-                reverse_pressure_map = {v: k for k, v in items}
-                scidata_punit = facet["value"]["unitref"]
-                jcamp_punit = reverse_pressure_map[scidata_punit]
-                partial_pressure = f'{facet["value"]["number"]} '
-                partial_pressure += f'{jcamp_punit}'
-
-    # Dataset
-    dataset = scidata.get("dataset")
-
-    attributes = dataset["datagroup"][0]["attributes"]
-
-    reverse_xunit_map = {v: k for k, v in _XUNIT_MAP.items()}
-    scidata_xunits = attributes[1]["value"]["unitref"]
-    xunits = reverse_xunit_map[scidata_xunits]
-
-    yunits = attributes[5]["value"]["unitref"]
-    xfactor = attributes[9]["value"]["number"]
-    yfactor = attributes[10]["value"]["number"]
-    first_x = attributes[1]["value"]["number"]
-    last_x = attributes[2]["value"]["number"]
-    first_y = attributes[5]["value"]["number"]
-    max_x = attributes[4]["value"]["number"]
-    min_x = attributes[3]["value"]["number"]
-    max_y = attributes[8]["value"]["number"]
-    min_y = attributes[7]["value"]["number"]
-    npoints = attributes[0]["value"]["number"]
-    delta_x = (float(last_x) - float(first_x)) / (float(npoints) - 1)
-
-    dataseries = dataset.get("dataseries")
-
-    with open(filename, 'w') as fileobj:
-        fileobj.write(f'##TITLE={graph.get("title")}\n')
-        fileobj.write(f'##JCAMP-DX={jcamp_dx}\n')
-        fileobj.write(f'##DATA TYPE={graph["scidata"]["property"][0]}\n')
-        fileobj.write(f'##ORIGIN={graph["publisher"]}\n')
-        fileobj.write(f'##OWNER={graph["author"][0]["name"]}\n')
-        fileobj.write(f'##DATE={date}\n')
-        if time:
-            fileobj.write(f'##TIME={time}\n')
-        if the_class:
-            fileobj.write(f'##CLASS={the_class}\n')
-        if casrn:
-            fileobj.write(f'##CAS REGISTRY NO={casrn}\n')
-        if formula:
-            fileobj.write(f'##MOLFORM={formula}\n')
-        if sources:
-            fileobj.write(f'##SOURCE REFERENCE={sources[0]["citation"]}\n')
-        if nist_source:
-            fileobj.write(f'##$NIST SOURCE={nist_source}\n')
-        if nist_image:
-            fileobj.write(f'##$NIST IMAGE={nist_image}\n')
-        if instrument:
-            fileobj.write(f'##SPECTROMETER/DATA SYSTEM={instrument}\n')
-        if parameters:
-            fileobj.write(f'##INSTRUMENT PARAMETERS={parameters}\n')
-        if phase:
-            fileobj.write(f'##STATE={phase}\n')
-        if partial_pressure:
-            fileobj.write(f'##PARTIAL_PRESSURE={partial_pressure}\n')
-        if path_length:
-            fileobj.write(f'##PATH LENGTH={path_length}\n')
-        if procedure:
-            fileobj.write(f'##SAMPLING PROCEDURE={procedure["description"]}\n')
-        if resolution:
-            fileobj.write(f'##RESOLUTION={resolution}\n')
-        if resource:
-            fileobj.write(f'##DATA PROCESSING={resource["description"]}\n')
-        fileobj.write(f'##XUNITS={xunits}\n')
-        fileobj.write(f'##YUNITS={yunits}\n')
-        fileobj.write(f'##XFACTOR={xfactor}\n')
-        fileobj.write(f'##YFACTOR={yfactor}\n')
-        fileobj.write(f'##DELTAX={delta_x:.6f}\n')
-        fileobj.write(f'##FIRSTX={first_x}\n')
-        fileobj.write(f'##LASTX={last_x}\n')
-        fileobj.write(f'##FIRSTY={first_y}\n')
-        fileobj.write(f'##MAXX={max_x}\n')
-        fileobj.write(f'##MINX={min_x}\n')
-        fileobj.write(f'##MAXY={max_y}\n')
-        fileobj.write(f'##MINY={min_y}\n')
-        fileobj.write(f'##NPOINTS={npoints}\n')
-        fileobj.write(f'##XYDATA={xydata}\n')
-
-        xdata = []
-        ydata = []
-        for data in dataseries:
-            if data.get("axis") == "x-axis":
-                xdata = data["parameter"]["valuearray"]["numberarray"]
-            if data.get("axis") == "y-axis":
-                ydata = data["parameter"]["valuearray"]["numberarray"]
-
-        for x, y in zip(xdata, ydata):
-            fileobj.write(f' {x:.3f},   {y:.3f}\n')
-
+    _write_header(filename, scidata_dict, mode='w')
+    _write_data(filename, scidata_dict, mode='a')
+    with open(filename, 'a') as fileobj:
         fileobj.write('##END=\n')
