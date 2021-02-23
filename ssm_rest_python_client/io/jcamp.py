@@ -259,7 +259,7 @@ def _parse_dataset_line(line, data_format):
         raise UnsupportedDataTypeConfigException(msg)
 
     if data_format == _DATA_FORMAT_XYXY:
-        values = [v.strip() for v in re.split(r"[,;\s]", line) if v]
+        values = [float(v.strip()) for v in re.split(r"[,;\s]", line) if v]
 
     if data_format == _DATA_FORMAT_XYYY:
         line = ' '.join(line.split())
@@ -366,7 +366,7 @@ def _parse_header_line(line, jcamp_dict, datastart=False, last_key=None):
 
 
 def _reader(filehandle):
-    jcamp_dict = {}
+    jcamp_dict = dict()
     xstart = []
     xnum = []
     y = []
@@ -495,6 +495,8 @@ def _get_graph_section(jcamp_dict):
     graph = _copy_from_dict_to_dict(jcamp_dict, "title", graph, "title")
     graph = _copy_from_dict_to_dict(jcamp_dict, "origin", graph, "publisher")
     graph = _copy_from_dict_to_dict(jcamp_dict, "date", graph, "generatedAt")
+    if "time" in jcamp_dict:
+        graph["generatedAt"] += f' - {jcamp_dict.get("time")}'
 
     # Description
     description = ""
@@ -605,6 +607,7 @@ def _get_methodology_section(jcamp_dict):
         settings.append({
             "@id": f'setting/{len(settings) + 1}',
             "@type": "sdo:setting",
+            "property": "instrument parameters",
             "value": {
                 "@id": f'setting/{len(settings) + 1}/value',
                 "number": jcamp_dict.get("instrument parameters"),
@@ -632,7 +635,7 @@ def _get_methodology_section(jcamp_dict):
             "@id": f'setting/{len(settings) + 1}',
             "@type": "sdo:setting",
             "quantity": "resolution",
-            "property": "Resolution",
+            "property": "resolution",
             "value": {
                 "@id": f'setting/{len(settings) + 1}/value',
                 "number": jcamp_dict.get("resolution"),
@@ -648,13 +651,13 @@ def _get_methodology_section(jcamp_dict):
     if "sampling procedure" in jcamp_dict:
         sampling_procedure = {
             "@id": "procedure/1",
-            "@type": "sdo:resource",
+            "@type": "sdo:procedure",
             "description": jcamp_dict.get("sampling procedure")
         }
         aspects.append(sampling_procedure)
     if "data processing" in jcamp_dict:
         data_processing_procedure = {
-            "@id": "procedure/2",
+            "@id": "resource/1",
             "@type": "sdo:resource",
             "description": jcamp_dict.get("data processing")
         }
@@ -692,12 +695,14 @@ def _get_system_section(jcamp_dict):
         compound_dict = _copy_from_dict_to_dict(
             jcamp_dict, "title",
             compound_dict, "name")
-        compound_dict = _copy_from_dict_to_dict(
-            jcamp_dict, "molform",
-            compound_dict, "formula")
-        compound_dict = _copy_from_dict_to_dict(
-            jcamp_dict, "cas registry no",
-            compound_dict, "casrn")
+        if "molform" in jcamp_dict:
+            compound_dict = _copy_from_dict_to_dict(
+                jcamp_dict, "molform",
+                compound_dict, "formula")
+        if "cas registry no" in jcamp_dict:
+            compound_dict = _copy_from_dict_to_dict(
+                jcamp_dict, "cas registry no",
+                compound_dict, "casrn")
 
         facets.append(compound_dict)
 
@@ -964,6 +969,7 @@ def _translate_jcamp_to_scidata(jcamp_dict):
     Returns:
         scidata_dict (dict): SciDat JSON-LD from translation
     """
+    scidata_dict = {}
     scidata_dict = get_scidata_base()
 
     graph = _get_graph_section(jcamp_dict)
@@ -1029,12 +1035,21 @@ def write_jcamp(filename, scidata_dict):
     jcamp_dx = _get_description_section(description, "JCAMP-DX")
     the_class = _get_description_section(description, "CLASS")
     xydata = _get_description_section(description, "XYDATA")
+    date_and_time = graph.get("generatedAt").split("-")
+    date = date_and_time[0].strip()
+    time = ""
+    if len(date_and_time) > 1:
+        time = date_and_time[1].strip()
 
     nist_description = ""
-    for source in graph.get("sources"):
-        if source.get("citation", "").startswith("NIST"):
-            nist_description = source.get("citation")
+    sources = graph.get("sources")
+    if sources:
+        for source in sources:
+            if source.get("citation", "").startswith("NIST"):
+                nist_description = source.get("citation")
 
+    nist_source = ""
+    nist_image = ""
     if nist_description:
         nist_source = _get_description_section(
             nist_description,
@@ -1048,33 +1063,65 @@ def write_jcamp(filename, scidata_dict):
 
     # Methodology
     methodology = scidata.get("methodology")
+
     aspects = methodology.get("aspects")
-    measurement = aspects[0]
-    procedure = aspects[1]
-    processing = aspects[2]
-    instrument = measurement.get("instrument")
-    settings = measurement.get("settings")
-    parameters = settings[0]["value"]["number"]
-    resolution = settings[2]["value"]["number"]
+    measurement = ""
+    procedure = ""
+    resource = ""
+    for aspect in aspects:
+        if aspect.get("@id").startswith("measurement"):
+            measurement = aspect
+        if aspect.get("@id").startswith("procedure"):
+            procedure = aspect
+        if aspect.get("@id").startswith("resource"):
+            resource = aspects
+
+    instrument = ""
+    if measurement:
+        instrument = measurement.get("instrument")
+
+    settings = measurement.get("settings", "")
+    parameters = ""
+    path_length = ""
+    resolution = ""
+    for setting in settings:
+        if setting.get("property").startswith("instrument parameters"):
+            parameters = setting["value"]["number"]
+        if setting.get("property").startswith("path length"):
+            reverse_length_map = {v: k for k, v in _LENGTH_UNIT_MAP.items()}
+            scidata_path_unit = settings[1]["value"]["unitref"]
+            jcamp_path_unit = reverse_length_map[scidata_path_unit]
+            path_length = f'{settings[1]["value"]["number"]} '
+            path_length += f'{jcamp_path_unit.upper()}'
+        if setting.get("property").startswith("resolution"):
+            resolution = setting["value"]["number"]
 
     # System
     system = scidata.get("system")
+    facets = system.get("facets")
 
-    casrn = system["facets"][0]["casrn"]
-    formula = system["facets"][0]["formula"]
-    phase = system["facets"][1]["phase"]
+    casrn = ""
+    formula = ""
+    phase = ""
+    partial_pressure = ""
+    if facets:
+        for facet in facets:
+            if facet.get("@id").startswith("compound"):
+                if "casrn" in facet:
+                    casrn = facet["casrn"]
+                if "formula" in facet:
+                    formula = facet["formula"]
+            if facet.get("@id").startswith("substance"):
+                if "phase" in facet:
+                    phase = facet["phase"]
 
-    reverse_pressure_map = {v: k for k, v in _PRESSURE_UNIT_MAP.items()}
-    scidata_punit = system["facets"][2]["value"]["unitref"]
-    jcamp_punit = reverse_pressure_map[scidata_punit]
-    partial_pressure = f'{system["facets"][2]["value"]["number"]} '
-    partial_pressure += f'{jcamp_punit}'
-
-    reverse_length_map = {v: k for k, v in _LENGTH_UNIT_MAP.items()}
-    scidata_path_unit = settings[1]["value"]["unitref"]
-    jcamp_path_unit = reverse_length_map[scidata_path_unit]
-    path_length = f'{settings[1]["value"]["number"]} '
-    path_length += f'{jcamp_path_unit.upper()}'
+            if facet.get("@id").startswith("condition"):
+                items = _PRESSURE_UNIT_MAP.items()
+                reverse_pressure_map = {v: k for k, v in items}
+                scidata_punit = facet["value"]["unitref"]
+                jcamp_punit = reverse_pressure_map[scidata_punit]
+                partial_pressure = f'{facet["value"]["number"]} '
+                partial_pressure += f'{jcamp_punit}'
 
     # Dataset
     dataset = scidata.get("dataset")
@@ -1098,27 +1145,45 @@ def write_jcamp(filename, scidata_dict):
     npoints = attributes[0]["value"]["number"]
     delta_x = (float(last_x) - float(first_x)) / (float(npoints) - 1)
 
+    dataseries = dataset.get("dataseries")
+
     with open(filename, 'w') as fileobj:
         fileobj.write(f'##TITLE={graph.get("title")}\n')
         fileobj.write(f'##JCAMP-DX={jcamp_dx}\n')
         fileobj.write(f'##DATA TYPE={graph["scidata"]["property"][0]}\n')
-        fileobj.write(f'##CLASS={the_class}\n')
         fileobj.write(f'##ORIGIN={graph["publisher"]}\n')
         fileobj.write(f'##OWNER={graph["author"][0]["name"]}\n')
-        fileobj.write(f'##DATE={graph["generatedAt"]}\n')
-        fileobj.write(f'##CAS REGISTRY NO={casrn}\n')
-        fileobj.write(f'##MOLFORM={formula}\n')
-        fileobj.write(f'##SOURCE REFERENCE={sources[0]["citation"]}\n')
-        fileobj.write(f'##$NIST SOURCE={nist_source}\n')
-        fileobj.write(f'##$NIST IMAGE={nist_image}\n')
-        fileobj.write(f'##SPECTROMETER/DATA SYSTEM={instrument}\n')
-        fileobj.write(f'##INSTRUMENT PARAMETERS={parameters}\n')
-        fileobj.write(f'##STATE={phase}\n')
-        fileobj.write(f'##PARTIAL_PRESSURE={partial_pressure}\n')
-        fileobj.write(f'##PATH LENGTH={path_length}\n')
-        fileobj.write(f'##SAMPLING PROCEDURE={procedure["description"]}\n')
-        fileobj.write(f'##RESOLUTION={resolution}\n')
-        fileobj.write(f'##DATA PROCESSING={processing["description"]}\n')
+        fileobj.write(f'##DATE={date}\n')
+        if time:
+            fileobj.write(f'##TIME={time}\n')
+        if the_class:
+            fileobj.write(f'##CLASS={the_class}\n')
+        if casrn:
+            fileobj.write(f'##CAS REGISTRY NO={casrn}\n')
+        if formula:
+            fileobj.write(f'##MOLFORM={formula}\n')
+        if sources:
+            fileobj.write(f'##SOURCE REFERENCE={sources[0]["citation"]}\n')
+        if nist_source:
+            fileobj.write(f'##$NIST SOURCE={nist_source}\n')
+        if nist_image:
+            fileobj.write(f'##$NIST IMAGE={nist_image}\n')
+        if instrument:
+            fileobj.write(f'##SPECTROMETER/DATA SYSTEM={instrument}\n')
+        if parameters:
+            fileobj.write(f'##INSTRUMENT PARAMETERS={parameters}\n')
+        if phase:
+            fileobj.write(f'##STATE={phase}\n')
+        if partial_pressure:
+            fileobj.write(f'##PARTIAL_PRESSURE={partial_pressure}\n')
+        if path_length:
+            fileobj.write(f'##PATH LENGTH={path_length}\n')
+        if procedure:
+            fileobj.write(f'##SAMPLING PROCEDURE={procedure["description"]}\n')
+        if resolution:
+            fileobj.write(f'##RESOLUTION={resolution}\n')
+        if resource:
+            fileobj.write(f'##DATA PROCESSING={resource["description"]}\n')
         fileobj.write(f'##XUNITS={xunits}\n')
         fileobj.write(f'##YUNITS={yunits}\n')
         fileobj.write(f'##XFACTOR={xfactor}\n')
@@ -1133,3 +1198,16 @@ def write_jcamp(filename, scidata_dict):
         fileobj.write(f'##MINY={min_y}\n')
         fileobj.write(f'##NPOINTS={npoints}\n')
         fileobj.write(f'##XYDATA={xydata}\n')
+
+        xdata = []
+        ydata = []
+        for data in dataseries:
+            if data.get("axis") == "x-axis":
+                xdata = data["parameter"]["valuearray"]["numberarray"]
+            if data.get("axis") == "y-axis":
+                ydata = data["parameter"]["valuearray"]["numberarray"]
+
+        for x, y in zip(xdata, ydata):
+            fileobj.write(f' {x:.3f},   {y:.3f}\n')
+
+        fileobj.write('##END=\n')

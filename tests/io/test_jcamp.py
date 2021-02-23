@@ -152,8 +152,13 @@ def test_is_float():
 
 
 def test_parse_dataset_line():
-    line = ''
-    data_format = ''
+    target = [99.0, 98.0, 97.0, 96.0, 98.0, 93.0]
+    line = "99 98 97 96 98 93"
+
+    assert jcamp._parse_dataset_line(line, jcamp._DATA_FORMAT_XYYY) == target
+    assert jcamp._parse_dataset_line(line, jcamp._DATA_FORMAT_XYXY) == target
+
+    data_format = 'BAD FORMAT'
     with pytest.raises(jcamp.UnsupportedDataTypeConfigException):
         jcamp._parse_dataset_line(line, data_format)
 
@@ -342,8 +347,10 @@ def test_reader_uvvis(uvvis_toluene_file):
     assert jcamp_dict.get(jcamp._DATA_XY_TYPE_KEY) == '(XY..XY)'
 
 
-def test_read_jcamp(infrared_ethanol_file):
+def test_read_infrared(infrared_ethanol_file):
     scidata_dict = jcamp.read_jcamp(infrared_ethanol_file.absolute())
+    defaults = scidata.get_scidata_defaults()
+
     graph = scidata_dict.get('@graph')
     assert graph['title'] == 'ETHANOL'
     assert graph['publisher'] == 'DOW CHEMICAL COMPANY'
@@ -359,7 +366,7 @@ def test_read_jcamp(infrared_ethanol_file):
 
     # Methodology
     methodology = scidata_dict["@graph"]["scidata"]["methodology"]
-    target = scidata._DEFAULTS["@graph"]["scidata"]["methodology"]
+    target = defaults["@graph"]["scidata"]["methodology"]
     assert methodology["@id"] == target["@id"]
     assert methodology["@type"] == target["@type"]
     assert len(methodology["evaluation"]) == 1
@@ -371,14 +378,10 @@ def test_read_jcamp(infrared_ethanol_file):
     assert grating == "GRATING CHANGED AT 5.0, 7.5, 15.0 MICRON"
     assert aspects[0]["settings"][1]["quantity"] == "length"
     assert aspects[0]["settings"][1]["property"] == "path length"
-    path_length = aspects[0]["settings"][1]["value"]["number"]
-    assert path_length == "5"
-    unitref = aspects[0]["settings"][1]["value"]["unitref"]
-    assert unitref == "qudt:CentiM"
 
     # System
     system = scidata_dict["@graph"]["scidata"]["system"]
-    target = scidata._DEFAULTS["@graph"]["scidata"]["system"]
+    target = defaults["@graph"]["scidata"]["system"]
     assert system["@id"] == target["@id"]
     assert system["@type"] == target["@type"]
     assert system["discipline"] == "w3i:Chemistry"
@@ -398,7 +401,7 @@ def test_read_jcamp(infrared_ethanol_file):
 
     # Dataset
     dataset = scidata_dict["@graph"]["scidata"]["dataset"]
-    target = scidata._DEFAULTS["@graph"]["scidata"]["dataset"]
+    target = defaults["@graph"]["scidata"]["dataset"]
     assert dataset["@id"] == target["@id"]
     assert dataset["@type"] == target["@type"]
     assert len(dataset) == 6
@@ -431,10 +434,85 @@ def test_read_jcamp(infrared_ethanol_file):
     assert attributes[10]["value"]["number"] == "1.0"
 
 
-def test_write_infrared(tmp_path, infrared_ethanol_file):
-    scidata_dict = jcamp.read_jcamp(infrared_ethanol_file.absolute())
+def test_read_raman(raman_tannic_acid_file):
+    scidata_dict = jcamp.read_jcamp(raman_tannic_acid_file.absolute())
+    defaults = scidata.get_scidata_defaults()
+
+    graph = scidata_dict.get('@graph')
+    assert graph['title'] == 'tannic acid'
+    assert graph['publisher'] == 'Ocean Optics R2000'
+    assert graph['generatedAt'] == '2000/10/04 - 14:47'
+
+    # Check description has all the keywords from JCAMP file
+    description = graph.get("description")
+    for jcamp_keyword in ["JCAMP-DX", jcamp._DATA_FORMAT_XYXY]:
+        assert jcamp_keyword in description
+
+    assert len(graph["author"]) == 1
+    assert graph["author"][0]["name"].startswith("Augustana College")
+
+    # Methodology
+    methodology = scidata_dict["@graph"]["scidata"]["methodology"]
+    target = defaults["@graph"]["scidata"]["methodology"]
+    assert methodology["@id"] == target["@id"]
+    assert methodology["@type"] == target["@type"]
+    assert len(methodology["evaluation"]) == 1
+    assert methodology["evaluation"] == ["experimental"]
+    assert len(methodology["aspects"]) == 1
+
+    # System
+    system = scidata_dict["@graph"]["scidata"]["system"]
+    target = defaults["@graph"]["scidata"]["system"]
+    assert system["@id"] == target["@id"]
+    assert system["@type"] == target["@type"]
+    assert system["discipline"] == "w3i:Chemistry"
+    assert system["subdiscipline"] == "w3i:AnalyticalChemistry"
+
+    # Dataset
+    dataset = scidata_dict["@graph"]["scidata"]["dataset"]
+    target = defaults["@graph"]["scidata"]["dataset"]
+    assert dataset["@id"] == target["@id"]
+    assert dataset["@type"] == target["@type"]
+    assert len(dataset) == 6
+    assert dataset["source"] == "measurement/1"
+    assert dataset["scope"] == "material/1"
+    assert len(dataset["datagroup"]) == 1
+    attributes = dataset["datagroup"][0]["attributes"]
+    assert len(attributes) == 11
+    assert attributes[0]["property"] == "Number of Data Points"
+    assert attributes[0]["value"]["number"] == "1949"
+    assert attributes[1]["property"] == "First X-axis Value"
+    assert attributes[1]["value"]["number"] == "100.595"
+    assert attributes[2]["property"] == "Last X-axis Value"
+    assert attributes[2]["value"]["number"] == "2854.713"
+    assert attributes[3]["property"] == "Minimum X-axis Value"
+    assert attributes[3]["value"]["number"] == "100.595"
+    assert attributes[4]["property"] == "Maximum X-axis Value"
+    assert attributes[4]["value"]["number"] == "2854.713"
+    assert attributes[5]["property"] == "First Y-axis Value"
+    assert attributes[5]["value"]["number"] == "42.644"
+    assert attributes[6]["property"] == "Last Y-axis Value"
+    assert attributes[6]["value"]["number"] == "4.667"
+    assert attributes[7]["property"] == "Minimum Y-axis Value"
+    assert attributes[7]["value"]["number"] == "4.667"
+    assert attributes[8]["property"] == "Maximum Y-axis Value"
+    assert attributes[8]["value"]["number"] == "300.889"
+    assert attributes[9]["property"] == "X-axis Scaling Factor"
+    assert attributes[9]["value"]["number"] == "1.0"
+    assert attributes[10]["property"] == "Y-axis Scaling Factor"
+    assert attributes[10]["value"]["number"] == "1.0"
+
+
+def test_write_raman(tmp_path, raman_tannic_acid_file):
+    scidata_dict = jcamp.read_jcamp(raman_tannic_acid_file.absolute())
     jcamp_dir = tmp_path / "jcamp"
     jcamp_dir.mkdir()
-    filename = jcamp_dir / "infrared_ethanol.rruff"
+    filename = jcamp_dir / "raman_tannic_acid.jdx"
     jcamp.write_jcamp(filename.absolute(), scidata_dict)
-    assert filename.read_text() == infrared_ethanol_file.read_text()
+    result = filename.read_text().splitlines()
+    target = raman_tannic_acid_file.read_text().splitlines()
+
+    for result_element, target_element in zip(result, target):
+        result_list = [x.strip() for x in result_element.split(',')]
+        target_list = [x.strip() for x in target_element.split(',')]
+        assert result_list == target_list
