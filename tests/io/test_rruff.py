@@ -18,11 +18,12 @@ def raman_soddyite_file():
 
 def test_read_rruff(raman_soddyite_file):
     scidata_dict = rruff.read_rruff(raman_soddyite_file.absolute())
+    defaults = scidata.get_scidata_defaults()
 
     # Top-level section
     graph = scidata_dict["@graph"]
     assert graph["@id"] == ""
-    assert graph["@type"] == scidata._DEFAULTS["@graph"]["@type"]
+    assert graph["@type"] == defaults["@graph"]["@type"]
     assert graph["title"] == "Soddyite"
     assert graph["uid"] == "rruff:R060361"
 
@@ -58,7 +59,7 @@ def test_read_rruff(raman_soddyite_file):
 
     # Methodology
     methodology = scidata_dict["@graph"]["scidata"]["methodology"]
-    target = scidata._DEFAULTS["@graph"]["scidata"]["methodology"]
+    target = defaults["@graph"]["scidata"]["methodology"]
     assert methodology["@id"] == target["@id"]
     assert methodology["@type"] == target["@type"]
     assert len(methodology["evaluation"]) == 1
@@ -70,7 +71,7 @@ def test_read_rruff(raman_soddyite_file):
 
     # System
     system = scidata_dict["@graph"]["scidata"]["system"]
-    target = scidata._DEFAULTS["@graph"]["scidata"]["system"]
+    target = defaults["@graph"]["scidata"]["system"]
     assert system["@id"] == target["@id"]
     assert system["@type"] == target["@type"]
     assert system["discipline"] == "w3i:Chemistry"
@@ -84,7 +85,7 @@ def test_read_rruff(raman_soddyite_file):
 
     # Dataset
     dataset = scidata_dict["@graph"]["scidata"]["dataset"]
-    target = scidata._DEFAULTS["@graph"]["scidata"]["dataset"]
+    target = defaults["@graph"]["scidata"]["dataset"]
     assert dataset["@id"] == target["@id"]
     assert dataset["@type"] == target["@type"]
     assert len(dataset) == 6

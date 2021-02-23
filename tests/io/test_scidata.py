@@ -2,7 +2,7 @@ from ssm_rest_python_client.io import scidata
 
 
 def test_get_context_header():
-    header = scidata._get_context_header()
+    header = scidata.get_context_header()
     assert '@context' in header
     assert len(header.get('@context')) == 2
 

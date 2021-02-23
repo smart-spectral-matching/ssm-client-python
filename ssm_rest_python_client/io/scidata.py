@@ -1,6 +1,7 @@
+import copy
 import datetime
 
-_CONTEXT_HEADER = {
+__CONTEXT_HEADER = {
     "@context": [
         "https://stuchalk.github.io/scidata/contexts/scidata.jsonld",
         {
@@ -17,7 +18,7 @@ _CONTEXT_HEADER = {
     ]
 }
 
-_DEFAULTS = {
+__DEFAULTS = {
     "version": 2,
     "@id": "",
     "@graph": {
@@ -43,7 +44,7 @@ _DEFAULTS = {
 }
 
 
-def _get_context_header():
+def get_context_header():
     """
     Get the JSON-LD context (i.e. '@context') header
     for the SciData JSON-LD dict.
@@ -52,7 +53,17 @@ def _get_context_header():
     Return:
         context (dict): JSON-LD context header (i.e. '@context' entry)
     """
-    return _CONTEXT_HEADER
+    return copy.deepcopy(__CONTEXT_HEADER)
+
+
+def get_scidata_defaults():
+    """
+    Get the JSON-LD defaults for the SciData JSON-LD dict.
+
+    Return:
+        defaults (dict): SciData JSON-LD defaults
+    """
+    return copy.deepcopy(__DEFAULTS)
 
 
 def get_scidata_base():
@@ -62,10 +73,10 @@ def get_scidata_base():
     Return:
         scidata_base_dict (dict): Base SciData JSON-LD to modify for output
     """
-    scidata_dict = dict()
+    scidata_dict = {}
 
     # Add context
-    context = _get_context_header()
+    context = get_context_header()
     scidata_dict.update(context)
 
     # Add generatedAt key
@@ -74,6 +85,7 @@ def get_scidata_base():
     scidata_dict.update({"generatedAt": generated_at})
 
     # Add defaults
-    scidata_dict.update(_DEFAULTS)
+    defaults = get_scidata_defaults()
+    scidata_dict.update(defaults)
 
     return scidata_dict
