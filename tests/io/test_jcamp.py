@@ -126,13 +126,12 @@ def xy_minmax_checker(testdict):
 
 # Tests
 
-def test_is_float_true():
+def test_is_float():
     assert jcamp._is_float('0.09')
     assert jcamp._is_float(['0.09'])
     assert jcamp._is_float(['0.09', '10.0', '10'])
+    assert jcamp._is_float(('0.09', '10.0', '10'))
 
-
-def test_is_float():
     assert not jcamp._is_float('cat')
     assert jcamp._is_float(['cat']) == [False]
     assert jcamp._is_float(['cat', 'x']) == [False, False]
@@ -236,10 +235,11 @@ def test_parse_header_line():
     assert last_key == 'xunits'
 
 
-def test_get_description_section():
+def test_extract_description_section():
     description = "CAT: meow, DOG: bark"
-    assert jcamp._get_description_section(description, "CAT") == "meow"
-    assert jcamp._get_description_section(description, "DOG") == "bark"
+    assert jcamp._extract_description_section(description, "CAT") == "meow"
+    assert jcamp._extract_description_section(description, "DOG") == "bark"
+    assert jcamp._extract_description_section(description, "EAGLE") == None
 
 
 def test_reader_hnmr(hnmr_ethanol_file):
