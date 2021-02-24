@@ -1,5 +1,6 @@
 import numpy as np
 import re
+from typing import List, Tuple
 
 from .scidata import get_scidata_base
 
@@ -10,6 +11,7 @@ _DATA_TYPE_KEY = "data type"
 _DATA_XY_TYPE_KEY = "xy data type"
 _DATA_XY_TYPES = ('xydata', 'xypoints', 'peak table')
 _DATA_LINK = "link"
+_DESCRIPTION_KEY_SPLIT_CHAR = ";"
 _CHILDREN = "children"
 _XUNIT_MAP = {
     "1/CM": "qudt:PER-CentiM",
@@ -101,16 +103,17 @@ DUP_digits = {
 }
 
 
-def _is_float(strings):
+def _is_float(strings: List[str]) -> bool:
     '''
     Test if a string, or list of strings, contains a numeric value(s).
 
     Args:
-        strings (str or list[str]): The string or list of strings to test.
+        strings:
+            The string or list of strings to test.
 
     Returns:
-        is_float_bool (bool or list[bool]): A single boolean or list of boolean
-             values indicating whether each input can be converted into float.
+        Single boolean or list of boolean values indicating whether each input
+        can be converted into float.
 
     Raises:
         TypeError: If passing a list and elements are not strings or single
@@ -143,7 +146,7 @@ def _is_float(strings):
             return False
 
 
-def _parse_dataset_duplicate_characters(line):
+def _parse_dataset_duplicate_characters(line: str) -> str:
     """
     Parse duplicate character compression for a line (i.e. DUP characters).
     Valid DUP characters are: [S, T, U, V, W, X, Y, Z]
@@ -155,10 +158,11 @@ def _parse_dataset_duplicate_characters(line):
         - http://wwwchem.uwimona.edu.jm/software/jcampdx.html
 
     Args:
-        line (str): Line in JCAMP-DX file with duplicate characters (DUP)
+        line: 
+            Line in JCAMP-DX file with duplicate characters (DUP)
 
     Returns:
-        new_line (str): Processed line with duplicates added in
+        Processed line with duplicates added in
     """
     new_line = ""
     for i, char in enumerate(line):
@@ -173,18 +177,20 @@ def _parse_dataset_duplicate_characters(line):
     return "".join(new_line)
 
 
-def _num_dif_factory(char, line):
+def _num_dif_factory(char: str, line:str) -> Tuple[str, bool]:
     """
     Helper utility factory function to `parse_dataset_line_single_x_multi_y`
     to use the current character to give the next numeric value
     and flag if we are processing using DIF compression.
 
     Args:
-        char (str): Character we are currently processing.
-        line (str): Line we are processing, used for raising exception.
+        char:
+            Character we are currently processing.
+        line:
+            Line we are processing, used for raising exception.
 
     Returns:
-        (num, DIF) (tuple): Updated values for numeric character and DIF flag.
+        Tuple of pdated values for numeric character (char) and DIF flag (bool).
 
     Raises:
         UnkownCharacterException: If we find a character that is neither
@@ -615,7 +621,7 @@ def _get_graph_section(jcamp_dict):
         graph["generatedAt"] += f' - {jcamp_dict.get("time")}'
 
     # Description
-    description = ""
+    description_lines = []
     description_keywords = [
         "jcamp-dx",
         "class",
@@ -626,7 +632,9 @@ def _get_graph_section(jcamp_dict):
     for key in description_keywords:
         if key in jcamp_dict:
             value = jcamp_dict.get(key)
-            description += f'{key.upper()}: {value}, '
+            description_lines.append(f'{key.upper()}: {value}')
+
+    description = _DESCRIPTION_KEY_SPLIT_CHAR.join(description_lines)
     graph = _copy_from_dict_to_dict(
             {"description": description}, "description",
             graph, "description")
@@ -1064,8 +1072,22 @@ def _translate_jcamp_to_scidata(jcamp_dict):
     return scidata_dict
 
 
-def _get_description_section(desc, section):
-    results = [x for x in desc.split(',') if x.strip().startswith(section)]
+def _extract_description_section(description: str, key: str) -> str:
+    """
+    Given a description string of the form "KEY1: VALUE1, KEY2: VALUE2, ..."
+    extract the KEY that matches input key and extract the VALUE
+
+    Args:
+        desc:
+            The description of form "KEY1: VALUE1, KEY2: VALUE2, ..."
+        key:
+            The key used to extract value from the description
+    Returns:
+        String of the VALUE extracted from description for the key provided.
+        None is returned if key is not in the description.
+    """
+    desc_list = description.split(_DESCRIPTION_KEY_SPLIT_CHAR)
+    results = [x for x in desc_list if x.strip().startswith(key)]
     if not results:
         return None
     element = results[0]
@@ -1076,7 +1098,7 @@ def _get_description_section(desc, section):
 def _add_header_lines_general(scidata_dict):
     graph = scidata_dict.get("@graph")
     description = graph.get("description", "")
-    jcamp_dx = _get_description_section(description, "JCAMP-DX")
+    jcamp_dx = _extract_description_section(description, "JCAMP-DX")
     lines = []
     lines.append(f'##JCAMP-DX={jcamp_dx}\n')
     lines.append(f'##DATA TYPE={graph["scidata"]["property"][0]}\n')
@@ -1091,7 +1113,7 @@ def _add_header_lines_general(scidata_dict):
         time = date_and_time[1].strip()
         lines.append(f'##TIME={time}\n')
 
-    the_class = _get_description_section(description, "CLASS")
+    the_class = _extract_description_section(description, "CLASS")
     if the_class:
         lines.append(f'##CLASS={the_class}\n')
 
@@ -1103,12 +1125,12 @@ def _add_header_lines_general(scidata_dict):
         for source in sources:
             nist_description = source.get("citation", "")
             if nist_description.startswith("NIST"):
-                nist_source = _get_description_section(
+                nist_source = _extract_description_section(
                     nist_description,
                     "NIST SOURCE")
                 lines.append(f'##$NIST SOURCE={nist_source}\n')
 
-                nist_image = _get_description_section(
+                nist_image = _extract_description_section(
                     nist_description,
                     "NIST IMAGE")
                 lines.append(f'##$NIST IMAGE={nist_image}\n')
@@ -1228,13 +1250,26 @@ def _add_header_lines_dataset(scidata_dict):
     lines.append(f'##NPOINTS={npoints}\n')
 
     description = scidata_dict.get("@graph").get("description")
-    xydata = _get_description_section(description, "XYDATA")
+    xydata = _extract_description_section(description, "XYDATA")
     lines.append(f'##XYDATA={xydata}\n')
 
     return lines
 
 
-def _write_header(filename, scidata_dict, mode='w'):
+def _write_jcamp_header_section(filename, scidata_dict, mode='w'):
+    """
+    Writes header of the JCAMP-DX file for given SciData JSON-LD
+    to the filename provided. Default mode is to overwrite the file.
+
+    Args:
+        filename:
+            String name of file to write JCAMP header
+        scidata_dict:
+            Dictionary of SciData JSON-LD to extract header info
+        mode:
+            File mode to use (i.e. 'w' for overwrite, 'a' for append, ...)
+    """
+
     lines = []
 
     graph = scidata_dict.get("@graph")
@@ -1250,7 +1285,7 @@ def _write_header(filename, scidata_dict, mode='w'):
             fileobj.write(line)
 
 
-def _write_data(filename, scidata_dict, mode='w'):
+def _write_jcamp_data_section(filename, scidata_dict, mode='w'):
     dataset = scidata_dict.get("@graph").get("scidata").get("dataset")
     dataseries = dataset.get("dataseries")
     with open(filename, mode) as fileobj:
@@ -1295,7 +1330,7 @@ def write_jcamp(filename, scidata_dict):
         filename (str): Filename for JCAMP-DX file
         scidata_dict (dict): SciData JSON-LD dictionary to write out
     """
-    _write_header(filename, scidata_dict, mode='w')
-    _write_data(filename, scidata_dict, mode='a')
+    _write_jcamp_header_section(filename, scidata_dict, mode='w')
+    _write_jcamp_data_section(filename, scidata_dict, mode='a')
     with open(filename, 'a') as fileobj:
         fileobj.write('##END=\n')
