@@ -242,7 +242,7 @@ def test_extract_description_section():
     description = jcamp._DESCRIPTION_KEY_SPLIT_CHAR.join(description_lines)
     assert jcamp._extract_description_section(description, "CAT") == "meow"
     assert jcamp._extract_description_section(description, "DOG") == "bark"
-    assert jcamp._extract_description_section(description, "EAGLE") == None
+    assert jcamp._extract_description_section(description, "EAGLE") is None
 
 
 def test_reader_hnmr(hnmr_ethanol_file):

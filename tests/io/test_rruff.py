@@ -117,6 +117,7 @@ def test_read_rruff(raman_soddyite_file):
     assert attributes[10]["property"] == "Y-axis Scaling Factor"
     assert attributes[10]["value"]["number"] == "1"
 
+
 def test_write_rruff(tmp_path, raman_soddyite_file):
     scidata_dict = rruff.read_rruff(raman_soddyite_file.absolute())
     rruff_dir = tmp_path / "rruff"

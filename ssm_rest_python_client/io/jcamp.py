@@ -158,7 +158,7 @@ def _parse_dataset_duplicate_characters(line: str) -> str:
         - http://wwwchem.uwimona.edu.jm/software/jcampdx.html
 
     Args:
-        line: 
+        line:
             Line in JCAMP-DX file with duplicate characters (DUP)
 
     Returns:
@@ -177,7 +177,7 @@ def _parse_dataset_duplicate_characters(line: str) -> str:
     return "".join(new_line)
 
 
-def _num_dif_factory(char: str, line:str) -> Tuple[str, bool]:
+def _num_dif_factory(char: str, line: str) -> Tuple[str, bool]:
     """
     Helper utility factory function to `parse_dataset_line_single_x_multi_y`
     to use the current character to give the next numeric value
@@ -190,7 +190,8 @@ def _num_dif_factory(char: str, line:str) -> Tuple[str, bool]:
             Line we are processing, used for raising exception.
 
     Returns:
-        Tuple of pdated values for numeric character (char) and DIF flag (bool).
+        Tuple of updated values for numeric character (char)
+        and DIF flag (bool). Example: ('+1', False)
 
     Raises:
         UnkownCharacterException: If we find a character that is neither

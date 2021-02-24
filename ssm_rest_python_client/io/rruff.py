@@ -3,8 +3,11 @@ import numpy as np
 from .jcamp import (
     _copy_from_dict_to_dict,
     _DATA_FORMAT_XYXY,
+    _DESCRIPTION_KEY_SPLIT_CHAR,
+    _extract_description_section,
     _parse_header_line,
     _parse_dataset_line,
+    _write_jcamp_data_section,
 )
 from .scidata import get_scidata_base
 
@@ -57,13 +60,15 @@ def _get_graph_section(rruff_dict):
     graph = _copy_from_dict_to_dict(rruff_dict, "owner", graph, "publisher")
 
     # Description
-    description = ""
+    description = []
     if "description" in rruff_dict:
-        description += f'DESCRIPTION: {rruff_dict.get("description")} '
+        description.append(f'DESCRIPTION: {rruff_dict.get("description")}')
     if "locality" in rruff_dict:
-        description += f'LOCALITY: {rruff_dict.get("locality")} '
+        description.append(f'LOCALITY: {rruff_dict.get("locality")}')
     if "status" in rruff_dict:
-        description += f'STATUS: {rruff_dict.get("status")} '
+        description.append(f'STATUS: {rruff_dict.get("status")}')
+
+    description = _DESCRIPTION_KEY_SPLIT_CHAR.join(description)
     graph = _copy_from_dict_to_dict(
             {"description": description}, "description",
             graph, "description")
@@ -396,6 +401,32 @@ def _translate_rruff_to_scidata(rruff_dict):
     return scidata_dict
 
 
+def _write_rruff_header_section(filename, scidata_dict, mode='w'):
+    lines = []
+
+    graph = scidata_dict.get("@graph")
+    lines.append(f'##NAMES={graph.get("title")}\n')
+
+    rruffid = graph.get("uid").strip("rruff:")
+    lines.append(f'##RRUFFID={rruffid}\n')
+
+    description = scidata_dict.get("@graph").get("description")
+
+    system = graph.get('scidata').get('system')
+    for facet in system.get('facets'):
+        if facet.get('@id').startswith('material'):
+            chemistry = facet.get('materialType')
+            lines.append(f'##IDEAL CHEMISTRY={chemistry}\n')
+
+    locality = _extract_description_section(description, "LOCALITY")
+    if locality:
+        lines.append(f'##LOCALITY={locality}\n')
+
+    with open(filename, mode) as fileobj:
+        for line in lines:
+            fileobj.write(line)
+
+
 def read_rruff(filename):
     """
     Reader for RRUFF database files to SciData JSON-LD dictionary
@@ -423,4 +454,7 @@ def write_rruff(filename, scidata_dict):
         filename (str): Filename for RRUFF file
         scidata_dict (dict): SciData JSON-LD dictionary to write out
     """
-    pass
+    _write_rruff_header_section(filename, scidata_dict, mode='w')
+    _write_jcamp_data_section(filename, scidata_dict, mode='a')
+    with open(filename, 'a') as fileobj:
+        fileobj.write('##END=\n')
