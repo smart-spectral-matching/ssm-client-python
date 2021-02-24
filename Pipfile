@@ -19,6 +19,8 @@ sphinx-rtd-theme = "*"
 
 [packages]
 numpy = "*"
+typing = "*"
+requests = "*"
 
 [requires]
 python_version = "3.6"
