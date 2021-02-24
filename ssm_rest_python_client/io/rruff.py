@@ -1,4 +1,6 @@
+
 import numpy as np
+from typing import List, TextIO
 
 from .jcamp import (
     _copy_from_dict_to_dict,
@@ -12,7 +14,63 @@ from .jcamp import (
 from .scidata import get_scidata_base
 
 
-def _reader(filehandle):
+def read_rruff(filename: str) -> dict:
+    """
+    Reader for RRUFF database files to SciData JSON-LD dictionary
+    RRUFF file format is a modified version of JCAMP, so re-use jcamp module
+
+    Args:
+        filename:
+            Filename to read from for RRUFF files
+
+    Returns:
+        SciData JSON-LD dictionary read from RRUFF file
+    """
+    # Extract rruff file data
+    with open(filename, "r") as fileobj:
+        rruff_dict = _reader(fileobj)
+    scidata_dict = _translate_rruff_to_scidata(rruff_dict)
+    return scidata_dict
+
+
+def write_rruff(filename: str, scidata_dict: dict) -> dict:
+    """
+    Reader for RRUFF database files to SciData JSON-LD dictionary
+    RRUFF file format is a modified version of JCAMP, so re-uses jcamp module
+
+    Args:
+        filename:
+            Filename for RRUFF file
+        scidata_dict:
+            SciData JSON-LD dictionary to write out
+    """
+    _write_rruff_header_section(
+        filename,
+        scidata_dict,
+        mode='w')
+
+    _write_jcamp_data_section(
+        filename,
+        scidata_dict,
+        mode='a',
+        precision=8,
+        trim=8)
+
+    with open(filename, 'a') as fileobj:
+        fileobj.write('##END=\n')
+
+
+def _reader(filehandle: TextIO) -> dict:
+    """
+    File reader for  RRUFF file format
+
+    Args:
+        filehandle:
+            RRUFF file to read from
+
+    Returns:
+        Dictionary parsed from RRUFF file
+    """
     rruff_dict = {}
     y = []
     x = []
@@ -44,15 +102,17 @@ def _reader(filehandle):
     return rruff_dict
 
 
-def _get_graph_section(rruff_dict):
+def _get_graph_section(rruff_dict: dict) -> dict:
     """
     Extract and translate from the RRUFF dictionary the SciData JSON-LD
     '@graph' section
 
     Args:
-        rruff_dict (dict): RRUFF dictionary to extract graph section from
-    Return:
-        graph (dict): '@graph' section of SciData JSON-LD from translation
+        rruff_dict:
+            RRUFF dictionary to extract graph section from
+
+    Returns:
+        The '@graph' section of SciData JSON-LD from translation
     """
     # Start translating the RRUFF dict -> SciData dict
     graph = {}
@@ -106,22 +166,24 @@ def _get_graph_section(rruff_dict):
                 "@id": f"source/{len(sources) + 1}",
                 "@type": "dc:source",
                 "citation": "RRUFF project database entry",
-                "url": "https://rruff.info/R060361",
+                "url": f'https://{rruff_dict.get("url")}',
             })
     graph["sources"] = sources
 
     return graph
 
 
-def _get_methodology_section(rruff_dict):
+def _get_methodology_section(rruff_dict: dict) -> dict:
     """
     Extract and translate from the RRUFF dictionary the SciData JSON-LD
     'methodology' section
 
     Args:
-        rruff_dict (dict): RRUFF dictionary to extract methodology section from
-    Return:
-        graph (dict): 'methodology' section of SciData JSON-LD from translation
+        rruff_dict:
+            RRUFF dictionary to extract methodology section from
+
+    Returns:
+        The 'methodology' section of SciData JSON-LD from translation
     """
     methodology = {}
     methodology["evaluation"] = ["experimental"]
@@ -150,7 +212,18 @@ def _get_methodology_section(rruff_dict):
     return methodology
 
 
-def _get_system_section(rruff_dict):
+def _get_system_section(rruff_dict: dict) -> dict:
+    """
+    Extract and translate from the RRUFF dictionary the SciData JSON-LD
+    'system' section
+
+    Args:
+        rruff_dict:
+            RRUFF dictionary to extract system section from
+
+    Returns:
+        The 'system' section of SciData JSON-LD from translation
+    """
     system = {}
     system["discipline"] = "w3i:Chemistry"
     system["subdiscipline"] = "w3i:AnalyticalChemistry"
@@ -170,7 +243,18 @@ def _get_system_section(rruff_dict):
     return system
 
 
-def _get_datagroup_subsection(rruff_dict):
+def _get_datagroup_subsection(rruff_dict: dict) -> List[dict]:
+    """
+    Extract and translate from the RRUFF dictionary the SciData JSON-LD
+    'dataset' section's datagroup
+
+    Args:
+        rruff_dict:
+            RRUFF dictionary to extract dataset section's datagroup from
+
+    Returns:
+        The 'dataset' section's datagroup of SciData JSON-LD from translation
+    """
     datagroup = [
         {
             "@id": "datagroup/1/",
@@ -312,7 +396,18 @@ def _get_datagroup_subsection(rruff_dict):
     return datagroup
 
 
-def _get_dataseries_subsection(rruff_dict):
+def _get_dataseries_subsection(rruff_dict: dict) -> List[dict]:
+    """
+    Extract and translate from the RRUFF dictionary the SciData JSON-LD
+    'dataset' section's dataseries
+
+    Args:
+        rruff_dict:
+            RRUFF dictionary to extract dataset section's dataseries from
+
+    Returns:
+        The 'dataset' section's dataseries of SciData JSON-LD from translation
+    """
     dataseries = [
         {
             "@id": "dataseries/1/",
@@ -356,7 +451,18 @@ def _get_dataseries_subsection(rruff_dict):
     return dataseries
 
 
-def _get_dataset_section(rruff_dict):
+def _get_dataset_section(rruff_dict: dict) -> dict:
+    """
+    Extract and translate from the RRUFF dictionary the SciData JSON-LD
+    'dataset' section
+
+    Args:
+        rruff_dict:
+            RRUFF dictionary to extract dataset section from
+
+    Returns:
+        The 'dataset' section of SciData JSON-LD from translation
+    """
     dataset = {}
     dataset["source"] = "measurement/1"
     dataset["scope"] = "material/1"
@@ -372,14 +478,15 @@ def _get_dataset_section(rruff_dict):
     return dataset
 
 
-def _translate_rruff_to_scidata(rruff_dict):
+def _translate_rruff_to_scidata(rruff_dict: dict) -> dict:
     """
     Main translation of RRUFF to SciData JSON-LD
 
     Args:
-        rruff_dict (dict): RRUFF dictionary extracted from read
+        RRUFF dictionary extracted from read
+
     Returns:
-        scidata_dict (dict): SciDat JSON-LD from translation
+        Dictionary of SciData JSON-LD from translation
     """
     scidata_dict = get_scidata_base()
 
@@ -401,7 +508,25 @@ def _translate_rruff_to_scidata(rruff_dict):
     return scidata_dict
 
 
-def _write_rruff_header_section(filename, scidata_dict, mode='w'):
+def _write_rruff_header_section(
+    filename: str, scidata_dict: dict, mode: str = 'w'
+):
+    """
+    Writes RRUFF file header to filename using the SciData JSON-LD
+    dictionary, scidata_data. Can optionally change the mode of how
+    to open the file
+
+    Args:
+        filename:
+            Name of the RRUFF file to write
+        scidata_dict:
+            SciData JSON-LD dictionary to write as RRUFF file
+        mode:
+            File mode. Default is 'w'.
+
+    Returns:
+        Dictionary of SciData JSON-LD from translation
+    """
     lines = []
 
     graph = scidata_dict.get("@graph")
@@ -422,39 +547,38 @@ def _write_rruff_header_section(filename, scidata_dict, mode='w'):
     if locality:
         lines.append(f'##LOCALITY={locality}\n')
 
+    publisher = graph.get("publisher")
+    lines.append(f'##OWNER={publisher}\n')
+
+    author = graph.get('author')[0]["name"]
+    lines.append(f'##SOURCE={author}\n')
+
+    rruff_description = _extract_description_section(
+        description,
+        "DESCRIPTION")
+    if rruff_description:
+        lines.append(f'##DESCRIPTION={rruff_description}\n')
+
+    status = _extract_description_section(description, "STATUS")
+    if status:
+        lines.append(f'##STATUS={status}\n')
+
+    methodology = graph.get('scidata').get('methodology')
+    for aspect in methodology.get('aspects'):
+        if aspect.get('@id').startswith('measurement'):
+            settings = aspect.get('settings')
+            for setting in settings:
+                prop = setting.get('property').lower()
+                if prop.startswith('laser wavelength'):
+                    laser_wavelength = setting.get('value').get('number')
+                    lines.append(f'##LASER_WAVELENGTH={laser_wavelength}\n')
+
+    sources = graph.get('sources')
+    for source in sources:
+        if source.get('url').startswith('https://rruff.info'):
+            url = source.get('url').strip('https://')
+            lines.append(f'##URL={url}\n')
+
     with open(filename, mode) as fileobj:
         for line in lines:
             fileobj.write(line)
-
-
-def read_rruff(filename):
-    """
-    Reader for RRUFF database files to SciData JSON-LD dictionary
-    RRUFF file format is a modified version of JCAMP, so re-use jcamp module
-
-    Args:
-        filename (str): Filename to read from for RRUFF files
-
-    Returns:
-        scidata_dict (dict): SciData JSON-LD dictionary
-    """
-    # Extract rruff file data
-    with open(filename, "r") as fileobj:
-        rruff_dict = _reader(fileobj)
-    scidata_dict = _translate_rruff_to_scidata(rruff_dict)
-    return scidata_dict
-
-
-def write_rruff(filename, scidata_dict):
-    """
-    Reader for RRUFF database files to SciData JSON-LD dictionary
-    RRUFF file format is a modified version of JCAMP, so re-use jcamp module
-
-    Args:
-        filename (str): Filename for RRUFF file
-        scidata_dict (dict): SciData JSON-LD dictionary to write out
-    """
-    _write_rruff_header_section(filename, scidata_dict, mode='w')
-    _write_jcamp_data_section(filename, scidata_dict, mode='a')
-    with open(filename, 'a') as fileobj:
-        fileobj.write('##END=\n')
