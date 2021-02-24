@@ -103,6 +103,44 @@ DUP_digits = {
 }
 
 
+def read_jcamp(filename: str) -> dict:
+    """
+    Reader for JCAMP-DX files to SciData JSON-LD dictionary
+    JCAMP-DX is Joint Committee on Atomic and Molecular Physical Data eXchange
+    JCAMP-DX URL:  http://jcamp-dx.org/
+
+    Args:
+        filename:
+            Filename to read from for JCAMP-DX files
+
+    Returns:
+        SciData JSON-LD dictionary
+    """
+    # Extract jcamp file data
+    with open(filename, 'r') as fileobj:
+        jcamp_dict = _reader(fileobj)
+    scidata_dict = _translate_jcamp_to_scidata(jcamp_dict)
+    return scidata_dict
+
+
+def write_jcamp(filename: str, scidata_dict: dict):
+    """
+    Writer for SciData JSON-LD dictionary to JCAMP-DX files.
+    JCAMP-DX is Joint Committee on Atomic and Molecular Physical Data eXchange
+    JCAMP-DX URL:  http://jcamp-dx.org/
+
+    Args:
+        filename:
+            Filename for JCAMP-DX file
+        scidata_dict:
+            SciData JSON-LD dictionary to write out
+    """
+    _write_jcamp_header_section(filename, scidata_dict, mode='w')
+    _write_jcamp_data_section(filename, scidata_dict, mode='a')
+    with open(filename, 'a') as fileobj:
+        fileobj.write('##END=\n')
+
+
 def _is_float(strings: List[str]) -> bool:
     '''
     Test if a string, or list of strings, contains a numeric value(s).
@@ -216,7 +254,7 @@ def _num_dif_factory(char: str, line: str) -> Tuple[str, bool]:
     return (num, DIF)
 
 
-def _parse_dataset_line_single_x_multi_y(line):
+def _parse_dataset_line_single_x_multi_y(line: str) -> List[float]:
     """
     Parse a JCAMP data line when using the format '(X++(Y..Y))',
     where we have one X column and multiple Y columns on one line.
@@ -226,10 +264,12 @@ def _parse_dataset_line_single_x_multi_y(line):
         - http://wwwchem.uwimona.edu.jm/software/jcampdx.html
 
     Args:
-        line (str): Line from JCAMP for data of '(X++(Y..Y))' format
+        line:
+            Line from JCAMP for data of '(X++(Y..Y))' format
 
     Returns:
-        values (list[float]): List of float values for the line
+        values:
+            List of float values for the line
 
     Raises:
         UnkownCharacterException: If we find a character that is neither
@@ -264,7 +304,7 @@ def _parse_dataset_line_single_x_multi_y(line):
     return values
 
 
-def _parse_dataset_line(line, data_format):
+def _parse_dataset_line(line: str, data_format: str) -> List[float]:
     """
     Parse a data line of the JCAMP-DX file format for the given data format.
     Handles decoding JCAMP compression encoding.
@@ -273,11 +313,13 @@ def _parse_dataset_line(line, data_format):
         - http://wwwchem.uwimona.edu.jm/software/jcampdx.html
 
     Args:
-        line (str): Line in JCAMP-DX file to parse
-        data_format (str): Format of data. Choices: ['(XY..XY)', '(X++(Y..Y))']
+        line:
+            Line in JCAMP-DX file to parse
+        data_format:
+            Format of data. Choices: ['(XY..XY)', '(X++(Y..Y))']
 
     Returns:
-        values (list[float]): List of float values for the line
+        List of float values for the line
     """
     if data_format not in _DATA_FORMATS:
         msg = f'Data format {data_format} not supported type: {_DATA_FORMATS}'
@@ -293,22 +335,28 @@ def _parse_dataset_line(line, data_format):
     return values
 
 
-def _parse_header_get_dict(line, datastart):
+def _parse_header(line: str, datastart: bool) -> Tuple[dict, bool]:
     """
     Parse the header line, returning a dictionary for the key-value found
     and if we are starting into the data section.
 
     Args:
-        line (str): Line to parse as a JCAMP header
-        datastart (bool): Current flag for if we are in a data section
+        line:
+            Line to parse as a JCAMP header
+        datastart:
+            Current boolean flag for if we are in a data section
 
     Returns:
-       header_dict (dict): Dictionary with header keys found.
-                           Will mostly return a single key-value pair but
-                           for some will return multiple pairs
-                           Example: A compound file will return the extra
-                           {'children': []} pair when detected.
-        datastart (bool): Updated flag for if we are inside a data section
+        Tuple of a header dictionary and datastart boolean.
+
+        Dictionary with header keys found.
+        Will mostly return a single key-value pair but
+        for some will return multiple pairs
+
+        Example: A compound file will return the extra
+            {'children': []} pair when detected.
+
+        Boolean for datastart is updated flag if we are inside a data section
     """
     header_dict = {}
 
@@ -348,27 +396,32 @@ def _parse_header_get_dict(line, datastart):
     return header_dict, datastart
 
 
-def _parse_header_line(line, jcamp_dict, datastart=False, last_key=None):
+def _parse_header_line(
+    line: str, jcamp_dict: dict, datastart: bool = False, last_key: str = None
+) -> Tuple[dict, bool, str]:
     """
     Parse the JCAMP header line and update the output JCAMP dictionary.
 
     Args:
-        line (str):
-        jcamp_dict (dict):
-        datastart (bool, optional):
-        last_key (str, optional):
+        line:
+            Header line to parse
+        jcamp_dict:
+            Dictionary currently holding the JCAMP-DX file information
+        datastart:
+            Boolean that is True if we are inside a data section, False if not
+        last_key:
+            String to store the last key we parsed from the header
 
     Returns:
-        (jcamp_dict, datastart, last_key) (tuple): Tuple
-            of the modified JCAMP dictionary, the updated flag for if we are
-            in a data section and the last key entered used for updating a
-            multiline comment in the header.
+        Tuple of the modified JCAMP dictionary, the updated flag for if we are
+        in a data section and the last key entered used for updating a
+        multiline comment in the header.
 
     Raises:
         MultiHeaderKeyException: If multiple header keys parsed (should be one)
     """
     output_dict = dict(jcamp_dict)
-    header_dict, datastart = _parse_header_get_dict(line, datastart)
+    header_dict, datastart = _parse_header(line, datastart)
 
     # Get the header key, stripping 'children' key if it is a compound file
     remove_keys = (_CHILDREN, _DATA_XY_TYPE_KEY)
@@ -390,7 +443,13 @@ def _parse_header_line(line, jcamp_dict, datastart=False, last_key=None):
     return output_dict, datastart, last_key
 
 
-def _post_process_data_xy(jcamp_dict, x, y, xstart, xnum):
+def _post_process_data_xy(
+    jcamp_dict: dict,
+    x: List[float],
+    y: List[float],
+    xstart: List[float],
+    xnum: List[int]
+) -> Tuple[List[float], List[float]]:
     """
     Utility function for _reader to format the XY data in a
     post-process manner after we parse out this data from the file.
@@ -432,18 +491,20 @@ def _post_process_data_xy(jcamp_dict, x, y, xstart, xnum):
         x = x * jcamp_dict['xfactor']
     if ('yfactor' in jcamp_dict):
         y = y * jcamp_dict['yfactor']
+
     return x, y
 
 
-def _reader(filehandle):
+def _reader(filehandle: str) -> dict:
     """
     File reader for JCAMP-DX file format
 
     Args:
-        filehandle (list): JCAMP-DX file to read from
+        filehandle:
+            JCAMP-DX file to read from
 
     Returns:
-        jcamp_dict (dict): Dictionary parsed from JCAMP-DX file
+        Dictionary parsed from JCAMP-DX file
     """
     jcamp_dict = dict()
     xstart = []
@@ -514,33 +575,41 @@ def _reader(filehandle):
     return jcamp_dict
 
 
-def _copy_from_dict_to_dict(dict_a, key_a, dict_b, key_b):
+def _copy_from_dict_to_dict(
+    dict_src: dict, key_src: str, dict_dest: dict, key_dest: str
+) -> dict:
     """
-    Using dict_a and key_a, add dict_a[key_a] to dict_b[key_b].
-    If key_a does not exist in dict_a, just return
+    Using dict_src and key_src, add dict_src[key_src] to dict_dest[key_dest].
+    If key_src does not exist in dict_src, just return
 
     Args:
-        dict_a (dict): Dictionary to copy from using key_a
-        key_a (str): Key for dict_a to access value to copy to dict_b
-        dict_b (dict): Dictionary to copy to at key_b
-        key_b (dict): Key for dict_b to store value from dict_a[key_a]
+        dict_src:
+            Dictionary to copy from using key_src
+        key_src:
+            Key for dict_src to access value to copy to dict_dest
+        dict_dest:
+            Dictionary to copy to at key_dest
+        key_dest:
+            Key for dict_dest to store value from dict_src[key_src]
+
     Returns:
-        dict_b (dict): Dictionary w/ new key added (if it exists in dict_a)
+        Destination dictionary w/ new key added (if it exists in dict_src)
     """
-    if key_a in dict_a:
-        dict_b[key_b] = dict_a[key_a]
-    return dict_b
+    if key_src in dict_src:
+        dict_dest[key_dest] = dict_src[key_src]
+    return dict_dest
 
 
-def _get_graph_source_citation_section(jcamp_dict):
+def _get_graph_source_citation_section(jcamp_dict: dict) -> List[str]:
     """
     Extract and translate from the JCAMP-DX dictionary the SciData JSON-LD
     citations in the 'sources' section from the '@graph' scection.
 
     Args:
-        jcamp_dict (dict): JCAMP-DX dictionary to extract citations from
-    Return:
-        citations (list): citations from SciData JSON-LD
+        jcamp_dict:
+            JCAMP-DX dictionary to extract citations from
+    Returns:
+        List for citation from SciData JSON-LD
     """
     citation = []
     if "$ref author" in jcamp_dict:
@@ -558,15 +627,17 @@ def _get_graph_source_citation_section(jcamp_dict):
     return citation
 
 
-def _get_graph_source_section(jcamp_dict):
+def _get_graph_source_section(jcamp_dict: dict) -> List[dict]:
     """
     Extract and translate from the JCAMP-DX dictionary the SciData JSON-LD
     'sources' section from the '@graph' scection.
 
     Args:
-        jcamp_dict (dict): JCAMP-DX dictionary to extract sources section from
-    Return:
-        sources (list): 'sources' section of SciData JSON-LD from translation
+        jcamp_dict:
+            JCAMP-DX dictionary to extract sources section from
+
+    Returns:
+        List for 'sources' section of SciData JSON-LD from translation
     """
     sources = []
 
@@ -603,15 +674,17 @@ def _get_graph_source_section(jcamp_dict):
     return sources
 
 
-def _get_graph_section(jcamp_dict):
+def _get_graph_section(jcamp_dict: dict) -> dict:
     """
     Extract and translate from the JCAMP-DX dictionary the SciData JSON-LD
     '@graph' section
 
     Args:
-        jcamp_dict (dict): JCAMP-DX dictionary to extract graph section from
-    Return:
-        graph (dict): '@graph' section of SciData JSON-LD from translation
+        jcamp_dict:
+            JCAMP-DX dictionary to extract graph section from
+
+    Returns:
+        The '@graph' section of SciData JSON-LD from translation
     """
     # Start translating the JCAMP dict -> SciData dict
     graph = {}
@@ -660,17 +733,16 @@ def _get_graph_section(jcamp_dict):
     return graph
 
 
-def _get_methodology_section(jcamp_dict):
+def _get_methodology_section(jcamp_dict: dict) -> dict:
     """
     Extract and translate from the JCAMP-DX dictionary the SciData JSON-LD
     'methodology' section
 
     Args:
-        jcamp_dict (dict): JCAMP-DX dictionary to extract methodology
-                           section from
-    Return:
-        methodology (dict): 'methodology' section of SciData JSON-LD
-                            from translation
+        jcamp_dict: JCAMP-DX dictionary to extract methodology section from
+
+    Returns:
+        The 'methodology' section of SciData JSON-LD from translation
     """
     methodology = {}
     methodology["evaluation"] = ["experimental"]
@@ -751,16 +823,17 @@ def _get_methodology_section(jcamp_dict):
     return methodology
 
 
-def _get_system_section(jcamp_dict):
+def _get_system_section(jcamp_dict: dict) -> dict:
     """
     Extract and translate from the JCAMP-DX dictionary the SciData JSON-LD
     'system' section
 
     Args:
-        jcamp_dict (dict): JCAMP-DX dictionary to extract system
-                           section from
-    Return:
-        system (dict): 'system' section of SciData JSON-LD from translation
+        jcamp_dict:
+            JCAMP-DX dictionary to extract system section from
+
+    Returns:
+        The 'system' section of SciData JSON-LD from translation
     """
 
     system = {}
@@ -828,7 +901,18 @@ def _get_system_section(jcamp_dict):
     return system
 
 
-def _get_datagroup_subsection(jcamp_dict):
+def _get_datagroup_subsection(jcamp_dict: dict) -> List[dict]:
+    """
+    Extract and translate from the JCAMP-DX dictionary the SciData JSON-LD
+    'dataset' section's datagroup
+
+    Args:
+        jcamp_dict:
+            JCAMP-DX dictionary to extract dataset section's datagroup from
+
+    Returns:
+        The 'dataset' section's datagroup of SciData JSON-LD from translation
+    """
     xunits = jcamp_dict.get("xunits", "")
     xunitref = _XUNIT_MAP.get(xunits)
 
@@ -979,7 +1063,18 @@ def _get_datagroup_subsection(jcamp_dict):
     return datagroup
 
 
-def _get_dataseries_subsection(jcamp_dict):
+def _get_dataseries_subsection(jcamp_dict: dict) -> List[dict]:
+    """
+    Extract and translate from the JCAMP-DX dictionary the SciData JSON-LD
+    'dataset' section's dataseries
+
+    Args:
+        jcamp_dict:
+            JCAMP-DX dictionary to extract dataset section's dataseries from
+
+    Returns:
+        The 'dataset' section's dataseries of SciData JSON-LD from translation
+    """
     xunits = jcamp_dict.get("xunits", "")
     xunitref = _XUNIT_MAP.get(xunits)
 
@@ -1026,7 +1121,18 @@ def _get_dataseries_subsection(jcamp_dict):
     return dataseries
 
 
-def _get_dataset_section(jcamp_dict):
+def _get_dataset_section(jcamp_dict: dict) -> dict:
+    """
+    Extract and translate from the JCAMP-DX dictionary the SciData JSON-LD
+    'dataset' section
+
+    Args:
+        jcamp_dict:
+            JCAMP-DX dictionary to extract dataset section from
+
+    Returns:
+        The 'dataset' section of SciData JSON-LD from translation
+    """
     dataset = {}
     dataset["source"] = "measurement/1"
     dataset["scope"] = "material/1"
@@ -1042,14 +1148,16 @@ def _get_dataset_section(jcamp_dict):
     return dataset
 
 
-def _translate_jcamp_to_scidata(jcamp_dict):
+def _translate_jcamp_to_scidata(jcamp_dict: dict) -> dict:
     """
     Main translation of JCAMP-DX to SciData JSON-LD
 
     Args:
-        jcamp_dict (dict): JCAMP-DX dictionary extracted from read
+        jcamp_dict:
+            JCAMP-DX dictionary extracted from read
+
     Returns:
-        scidata_dict (dict): SciDat JSON-LD from translation
+        SciDat JSON-LD from translation
     """
     scidata_dict = {}
     scidata_dict = get_scidata_base()
@@ -1096,32 +1204,43 @@ def _extract_description_section(description: str, key: str) -> str:
     return value
 
 
-def _add_header_lines_general(scidata_dict):
+def _add_header_lines_general(scidata_dict: dict) -> List[str]:
+    """
+    Get the general graph header lines from the SciData JSON-LD dictionary
+    used to write the JCAMP-DX header lines
+
+    Args:
+        scidata_dict:
+            SciData JSON-LD dictionary to write as JCAMP-DX file
+
+    Returns:
+        List of header lines to write to the JCAMP-DX file
+    """
     graph = scidata_dict.get("@graph")
     description = graph.get("description", "")
     jcamp_dx = _extract_description_section(description, "JCAMP-DX")
     lines = []
-    lines.append(f'##JCAMP-DX={jcamp_dx}\n')
-    lines.append(f'##DATA TYPE={graph["scidata"]["property"][0]}\n')
-    lines.append(f'##ORIGIN={graph["publisher"]}\n')
-    lines.append(f'##OWNER={graph["author"][0]["name"]}\n')
+    lines.append(f'##JCAMP-DX={jcamp_dx}')
+    lines.append(f'##DATA TYPE={graph["scidata"]["property"][0]}')
+    lines.append(f'##ORIGIN={graph["publisher"]}')
+    lines.append(f'##OWNER={graph["author"][0]["name"]}')
 
     date_and_time = graph.get("generatedAt").split("-")
     date = date_and_time[0].strip()
-    lines.append(f'##DATE={date}\n')
+    lines.append(f'##DATE={date}')
 
     if len(date_and_time) > 1:
         time = date_and_time[1].strip()
-        lines.append(f'##TIME={time}\n')
+        lines.append(f'##TIME={time}')
 
     the_class = _extract_description_section(description, "CLASS")
     if the_class:
-        lines.append(f'##CLASS={the_class}\n')
+        lines.append(f'##CLASS={the_class}')
 
     sources = graph.get("sources")
     if sources:
         citation = graph.get("sources")[0]["citation"]
-        lines.append(f'##SOURCE REFERENCE={citation}\n')
+        lines.append(f'##SOURCE REFERENCE={citation}')
 
         for source in sources:
             nist_description = source.get("citation", "")
@@ -1129,17 +1248,28 @@ def _add_header_lines_general(scidata_dict):
                 nist_source = _extract_description_section(
                     nist_description,
                     "NIST SOURCE")
-                lines.append(f'##$NIST SOURCE={nist_source}\n')
+                lines.append(f'##$NIST SOURCE={nist_source}')
 
                 nist_image = _extract_description_section(
                     nist_description,
                     "NIST IMAGE")
-                lines.append(f'##$NIST IMAGE={nist_image}\n')
+                lines.append(f'##$NIST IMAGE={nist_image}')
 
-    return lines
+    return '\n'.join(lines)
 
 
-def _add_header_lines_methodology(scidata_dict):
+def _add_header_lines_methodology(scidata_dict: dict) -> List[str]:
+    """
+    Get the methodology header lines from the SciData JSON-LD dictionary
+    used to write the JCAMP-DX header lines
+
+    Args:
+        scidata_dict:
+            SciData JSON-LD dictionary to write as JCAMP-DX file
+
+    Returns:
+        List of header lines to write to the JCAMP-DX file
+    """
     lines = []
     scidata = scidata_dict.get("@graph").get("scidata")
     methodology = scidata.get("methodology")
@@ -1149,37 +1279,48 @@ def _add_header_lines_methodology(scidata_dict):
     measurement = ""
     for aspect in aspects:
         if aspect.get("@id").startswith("procedure"):
-            lines.append(f'##SAMPLING PROCEDURE={aspect["description"]}\n')
+            lines.append(f'##SAMPLING PROCEDURE={aspect["description"]}')
 
         if aspect.get("@id").startswith("resource"):
-            lines.append(f'##DATA PROCESSING={aspect["description"]}\n')
+            lines.append(f'##DATA PROCESSING={aspect["description"]}')
 
         if aspect.get("@id").startswith("measurement"):
             measurement = aspect
             instrument = measurement.get("instrument")
-            lines.append(f'##SPECTROMETER/DATA SYSTEM={instrument}\n')
+            lines.append(f'##SPECTROMETER/DATA SYSTEM={instrument}')
 
     # Settings
     settings = measurement.get("settings", "")
     for setting in settings:
         if setting.get("property").startswith("instrument parameters"):
             parameters = setting["value"]["number"]
-            lines.append(f'##INSTRUMENT PARAMETERS={parameters}\n')
+            lines.append(f'##INSTRUMENT PARAMETERS={parameters}')
         if setting.get("property").startswith("path length"):
             reverse_length_map = {v: k for k, v in _LENGTH_UNIT_MAP.items()}
             scidata_path_unit = settings[1]["value"]["unitref"]
             jcamp_path_unit = reverse_length_map[scidata_path_unit]
             path_length = f'{settings[1]["value"]["number"]} '
             path_length += f'{jcamp_path_unit.upper()}'
-            lines.append(f'##PATH LENGTH={path_length}\n')
+            lines.append(f'##PATH LENGTH={path_length}')
         if setting.get("property").startswith("resolution"):
             resolution = setting["value"]["number"]
-            lines.append(f'##RESOLUTION={resolution}\n')
+            lines.append(f'##RESOLUTION={resolution}')
 
-    return lines
+    return '\n'.join(lines)
 
 
-def _add_header_lines_system(scidata_dict):
+def _add_header_lines_system(scidata_dict: dict) -> List[str]:
+    """
+    Get the system header lines from the SciData JSON-LD dictionary
+    used to write the JCAMP-DX header lines
+
+    Args:
+        scidata_dict:
+            SciData JSON-LD dictionary to write as JCAMP-DX file
+
+    Returns:
+        List of header lines to write to the JCAMP-DX file
+    """
     lines = []
     scidata = scidata_dict.get("@graph").get("scidata")
     system = scidata.get("system")
@@ -1190,14 +1331,14 @@ def _add_header_lines_system(scidata_dict):
         for facet in facets:
             if facet.get("@id").startswith("compound"):
                 if "casrn" in facet:
-                    lines.append(f'##CAS REGISTRY NO={facet["casrn"]}\n')
+                    lines.append(f'##CAS REGISTRY NO={facet["casrn"]}')
 
                 if "formula" in facet:
-                    lines.append(f'##MOLFORM={facet["formula"]}\n')
+                    lines.append(f'##MOLFORM={facet["formula"]}')
 
             if facet.get("@id").startswith("substance"):
                 if "phase" in facet:
-                    lines.append(f'##STATE={facet["phase"]}\n')
+                    lines.append(f'##STATE={facet["phase"]}')
 
             if facet.get("@id").startswith("condition"):
                 items = _PRESSURE_UNIT_MAP.items()
@@ -1206,12 +1347,24 @@ def _add_header_lines_system(scidata_dict):
                 jcamp_punit = reverse_pressure_map[scidata_punit]
                 partial_pressure = f'{facet["value"]["number"]} '
                 partial_pressure += f'{jcamp_punit}'
-                lines.append(f'##PARTIAL_PRESSURE={partial_pressure}\n')
+                lines.append(f'##PARTIAL_PRESSURE={partial_pressure}')
 
-    return lines
+    return '\n'.join(lines)
 
 
-def _add_header_lines_dataset(scidata_dict):
+def _add_header_lines_dataset(scidata_dict: dict) -> List[str]:
+    """
+    Get the dataset header lines from the SciData JSON-LD dictionary
+    used to write the JCAMP-DX header lines
+
+    Args:
+        scidata_dict:
+            SciData JSON-LD dictionary to write as JCAMP-DX file
+
+    Returns:
+        List of header lines to write to the JCAMP-DX file
+    """
+
     lines = []
 
     scidata = scidata_dict.get("@graph").get("scidata")
@@ -1236,28 +1389,30 @@ def _add_header_lines_dataset(scidata_dict):
     npoints = attributes[0]["value"]["number"]
     delta_x = (float(last_x) - float(first_x)) / (float(npoints) - 1)
 
-    lines.append(f'##XUNITS={xunits}\n')
-    lines.append(f'##YUNITS={yunits}\n')
-    lines.append(f'##XFACTOR={xfactor}\n')
-    lines.append(f'##YFACTOR={yfactor}\n')
-    lines.append(f'##DELTAX={delta_x:.6f}\n')
-    lines.append(f'##FIRSTX={first_x}\n')
-    lines.append(f'##LASTX={last_x}\n')
-    lines.append(f'##FIRSTY={first_y}\n')
-    lines.append(f'##MAXX={max_x}\n')
-    lines.append(f'##MINX={min_x}\n')
-    lines.append(f'##MAXY={max_y}\n')
-    lines.append(f'##MINY={min_y}\n')
-    lines.append(f'##NPOINTS={npoints}\n')
+    lines.append(f'##XUNITS={xunits}')
+    lines.append(f'##YUNITS={yunits}')
+    lines.append(f'##XFACTOR={xfactor}')
+    lines.append(f'##YFACTOR={yfactor}')
+    lines.append(f'##DELTAX={delta_x:.6f}')
+    lines.append(f'##FIRSTX={first_x}')
+    lines.append(f'##LASTX={last_x}')
+    lines.append(f'##FIRSTY={first_y}')
+    lines.append(f'##MAXX={max_x}')
+    lines.append(f'##MINX={min_x}')
+    lines.append(f'##MAXY={max_y}')
+    lines.append(f'##MINY={min_y}')
+    lines.append(f'##NPOINTS={npoints}')
 
     description = scidata_dict.get("@graph").get("description")
     xydata = _extract_description_section(description, "XYDATA")
-    lines.append(f'##XYDATA={xydata}\n')
+    lines.append(f'##XYDATA={xydata}')
 
-    return lines
+    return '\n'.join(lines)
 
 
-def _write_jcamp_header_section(filename, scidata_dict, mode='w'):
+def _write_jcamp_header_section(
+    filename: str, scidata_dict: dict, mode: str = 'w'
+):
     """
     Writes header of the JCAMP-DX file for given SciData JSON-LD
     to the filename provided. Default mode is to overwrite the file.
@@ -1270,23 +1425,48 @@ def _write_jcamp_header_section(filename, scidata_dict, mode='w'):
         mode:
             File mode to use (i.e. 'w' for overwrite, 'a' for append, ...)
     """
-
     lines = []
 
     graph = scidata_dict.get("@graph")
-    lines.append(f'##TITLE={graph.get("title")}\n')
+    lines.append(f'##TITLE={graph.get("title")}')
 
-    lines += _add_header_lines_general(scidata_dict)
-    lines += _add_header_lines_methodology(scidata_dict)
-    lines += _add_header_lines_system(scidata_dict)
-    lines += _add_header_lines_dataset(scidata_dict)
+    headers = [
+        _add_header_lines_general(scidata_dict),
+        _add_header_lines_methodology(scidata_dict),
+        _add_header_lines_system(scidata_dict),
+        _add_header_lines_dataset(scidata_dict),
+    ]
+    for header in headers:
+        if header:
+            lines.append(header)
+    lines = '\n'.join(lines) + '\n'
 
     with open(filename, mode) as fileobj:
         for line in lines:
             fileobj.write(line)
 
 
-def _write_jcamp_data_section(filename, scidata_dict, mode='w'):
+def _write_jcamp_data_section(
+    filename: str,
+    scidata_dict: dict,
+    mode: str = 'w',
+    precision: int = 3,
+    trim: int = None,
+):
+    """
+    Writes dataset section of the JCAMP-DX file for given SciData JSON-LD
+    to the filename provided. Default mode is to overwrite the file.
+
+    Args:
+        filename:
+            String name of file to write JCAMP header
+        scidata_dict:
+            Dictionary of SciData JSON-LD to extract dataset info
+        mode:
+            File mode to use (i.e. 'w' for overwrite, 'a' for append, ...)
+        precision:
+            Floating point number for formatting the output data
+    """
     dataset = scidata_dict.get("@graph").get("scidata").get("dataset")
     dataseries = dataset.get("dataseries")
     with open(filename, mode) as fileobj:
@@ -1299,39 +1479,9 @@ def _write_jcamp_data_section(filename, scidata_dict, mode='w'):
                 ydata = data["parameter"]["valuearray"]["numberarray"]
 
         for x, y in zip(xdata, ydata):
-            fileobj.write(f' {x:.3f},   {y:.3f}\n')
-
-
-def read_jcamp(filename):
-    """
-    Reader for JCAMP-DX files to SciData JSON-LD dictionary
-    JCAMP-DX is Joint Committee on Atomic and Molecular Physical Data eXchange
-    JCAMP-DX URL:  http://jcamp-dx.org/
-
-    Args:
-        filename (str): Filename to read from for JCAMP-DX files
-
-    Returns:
-        scidata_dict (dict): SciData JSON-LD dictionary
-    """
-    # Extract jcamp file data
-    with open(filename, 'r') as fileobj:
-        jcamp_dict = _reader(fileobj)
-    scidata_dict = _translate_jcamp_to_scidata(jcamp_dict)
-    return scidata_dict
-
-
-def write_jcamp(filename, scidata_dict):
-    """
-    Writer for SciData JSON-LD dictionary to JCAMP-DX files.
-    JCAMP-DX is Joint Committee on Atomic and Molecular Physical Data eXchange
-    JCAMP-DX URL:  http://jcamp-dx.org/
-
-    Args:
-        filename (str): Filename for JCAMP-DX file
-        scidata_dict (dict): SciData JSON-LD dictionary to write out
-    """
-    _write_jcamp_header_section(filename, scidata_dict, mode='w')
-    _write_jcamp_data_section(filename, scidata_dict, mode='a')
-    with open(filename, 'a') as fileobj:
-        fileobj.write('##END=\n')
+            line = f' {x:.{precision}f},   {y:.{precision}f}'
+            if trim:
+                xline = f'{x:.{precision}f}'[0:trim]
+                yline = f'{y:.{precision}f}'[0:trim]
+                line = f' {xline},   {yline}'
+            fileobj.write(f'{line}\n')
