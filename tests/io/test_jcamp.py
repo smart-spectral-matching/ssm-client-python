@@ -236,7 +236,10 @@ def test_parse_header_line():
 
 
 def test_extract_description_section():
-    description = "CAT: meow, DOG: bark"
+    description_lines = []
+    description_lines.append("CAT: meow")
+    description_lines.append("DOG: bark")
+    description = jcamp._DESCRIPTION_KEY_SPLIT_CHAR.join(description_lines)
     assert jcamp._extract_description_section(description, "CAT") == "meow"
     assert jcamp._extract_description_section(description, "DOG") == "bark"
     assert jcamp._extract_description_section(description, "EAGLE") == None
