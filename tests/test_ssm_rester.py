@@ -69,5 +69,4 @@ def test_initialize_model_for_dataset(ssm_rester):
     dataset = DatasetContainer(uuid=dataset_uuid, uri=uri)
     ssm_rester.initialize_model_for_dataset(dataset)
     assert ssm_rester.model.hostname == ssm_rester.hostname
-    assert ssm_rester.model.port == ssm_rester.port
     assert ssm_rester.model.dataset_uuid == dataset_uuid

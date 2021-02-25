@@ -6,16 +6,14 @@ _DATASETS_ENDPOINT = "datasets"
 
 
 class DatasetService:
-    def __init__(self, hostname="http://localhost", port=8080):
+    def __init__(self, hostname="http://localhost"):
         """
         Initialize a DatasetService object
 
         Args:
             hostname (str): Hostname for the SSM REST API server
-            port (int): Port on the host to use
         """
         self.hostname = hostname
-        self.port = port
 
     def _endpoint(self, dataset=None):
         """
@@ -27,12 +25,9 @@ class DatasetService:
         Returns:
             endpoint (str): Datasets endpoint to use
         """
-        endpoint = "{uri}/{dataset}".format(
-            uri=self.uri,
-            dataset=_DATASETS_ENDPOINT)
-
+        endpoint = f'{self.uri}/{_DATASETS_ENDPOINT}'
         if dataset:
-            endpoint += "/{}".format(dataset)
+            endpoint += f'/{dataset}'
         return endpoint
 
     @property
@@ -40,7 +35,7 @@ class DatasetService:
         """
         URI property for DatasetContainer
         """
-        return "{host}:{port}".format(host=self.hostname, port=self.port)
+        return f'{self.hostname}'
 
     def create(self):
         """
