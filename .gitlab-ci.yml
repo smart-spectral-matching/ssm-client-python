@@ -19,6 +19,18 @@ lint:
     tags:
         - rse-ssm-builder
 
+lint-complexity:
+    stage: build
+    script:
+        - func_rse_docker_cleanup
+        - docker login --username=$CI_REGISTRY_USER --password=$CI_REGISTRY_PASSWORD $CI_REGISTRY
+        - docker build -f .ci/Dockerfile -t ssm-rest-python-client-lint .
+        - docker run ssm-rest-python-client-lint pipenv run make lint-complexity
+        - func_rse_docker_cleanup
+    tags:
+        - rse-ssm-builder
+    allow_failure: true
+
 test:
     stage: build
     script:

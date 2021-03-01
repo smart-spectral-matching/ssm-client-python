@@ -14,7 +14,6 @@ class ModelService:
     def __init__(
             self,
             hostname="http://localhost",
-            port=8080,
             dataset=None,
             dataset_uuid=None):
         """
@@ -22,7 +21,6 @@ class ModelService:
 
         Args:
             hostname (str): Hostname for the SSM REST API server
-            port (int): Port on the host to use
             dataset (DatasetContainer): Dataset the Models will belong to
             dataset_uuid (str): UUID of the Dataset the Models will belong to
 
@@ -31,7 +29,6 @@ class ModelService:
                 Raised when Dataset and UUID both passed in and do not match
         """
         self.hostname = hostname
-        self.port = port
 
         if dataset and dataset_uuid:
             if dataset.uuid != dataset_uuid:
@@ -54,25 +51,22 @@ class ModelService:
         Args:
             model (str): 64-character UUID to access a give model
 
-        Return:
+        Returns:
             endpoint (str): Models endpoint to use
         """
-        endpoint = "{uri}/{datasets}/{dataset_uuid}/{models}".format(
-            uri=self.uri,
-            datasets=_DATASETS_ENDPOINT,
-            dataset_uuid=self.dataset_uuid,
-            models=_MODELS_ENDPOINT)
-
+        endpoint = []
+        endpoint.append(f'{self.uri}/{_DATASETS_ENDPOINT}')
+        endpoint.append(f'{self.dataset_uuid}/{_MODELS_ENDPOINT}')
         if model:
-            endpoint += "/{}".format(model)
-        return endpoint
+            endpoint.append(f'/{model}')
+        return '/'.join(endpoint)
 
     @property
     def uri(self):
         """
         URI property for SSM REST API
         """
-        return "{host}:{port}".format(host=self.hostname, port=self.port)
+        return f'{self.hostname}'
 
     def create(self, model):
         """

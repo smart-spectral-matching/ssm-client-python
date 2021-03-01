@@ -50,6 +50,9 @@ clean-test: ## remove test and coverage artifacts
 lint: ## check style with flake8
 	flake8 ssm_rest_python_client tests
 
+lint-complexity: ## check cyclomatic complexity with flake8 + mccabe
+	flake8 --max-complexity 10 ssm_rest_python_client tests
+
 test: ## run tests quickly with the default Python
 	pytest
 
@@ -65,7 +68,7 @@ coverage: ## check code coverage quickly with the default Python
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/ssm_rest_python_client.rst
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ ssm_rest_python_client
+	sphinx-apidoc -F -o docs/ ssm_rest_python_client
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	#$(BROWSER) docs/_build/html/index.html

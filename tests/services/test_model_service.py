@@ -70,12 +70,10 @@ def test_construction(dataset):
     """Tests construction of ModelService object"""
     model = ModelService(dataset=dataset)
     assert model.hostname == "http://localhost"
-    assert model.port == 8080
     assert model.dataset_uuid == dataset.uuid
 
     model = ModelService(dataset=dataset, dataset_uuid=dataset.uuid)
     assert model.hostname == "http://localhost"
-    assert model.port == 8080
     assert model.dataset_uuid == dataset.uuid
 
     with pytest.raises(MismatchedDatasetException):
