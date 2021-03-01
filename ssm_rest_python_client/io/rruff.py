@@ -508,6 +508,122 @@ def _translate_rruff_to_scidata(rruff_dict: dict) -> dict:
     return scidata_dict
 
 
+def _get_ideal_chemistry(scidata_dict: dict) -> str:
+    """
+    Extract ideal chemistry from SciData JSON-LD dictionary
+
+    Args:
+        scidata_dict: SciData JSON-LD dictionary
+
+    Returns:
+        The ideal chemistry if exists in scidata_dict, None otherwise
+    """
+    chemistry = None
+    graph = scidata_dict.get("@graph")
+    system = graph.get('scidata').get('system')
+    for facet in system.get('facets'):
+        if facet.get('@id').startswith('material'):
+            chemistry = facet.get('materialType')
+    return chemistry
+
+
+def _get_laser_wavelength(scidata_dict: dict) -> str:
+    """
+    Extract laser wavelength from SciData JSON-LD dictionary
+
+    Args:
+        scidata_dict: SciData JSON-LD dictionary
+
+    Returns:
+        The laser wavelength if exists in scidata_dict, None otherwise
+    """
+    laser_wavelength = None
+    graph = scidata_dict.get("@graph")
+    methodology = graph.get('scidata').get('methodology')
+    for aspect in methodology.get('aspects'):
+        if aspect.get('@id').startswith('measurement'):
+            settings = aspect.get('settings')
+            for setting in settings:
+                prop = setting.get('property').lower()
+                if prop.startswith('laser wavelength'):
+                    laser_wavelength = setting.get('value').get('number')
+    return laser_wavelength
+
+
+def _get_rruff_url(scidata_dict: dict) -> str:
+    """
+    Extract RRUFF URL from SciData JSON-LD dictionary
+
+    Args:
+        scidata_dict: SciData JSON-LD dictionary
+
+    Returns:
+        The RRUFF URL if exists in scidata_dict, None otherwise
+    """
+    url = None
+    graph = scidata_dict.get("@graph")
+    sources = graph.get('sources')
+    for source in sources:
+        if source.get('url').startswith('https://rruff.info'):
+            url = source.get('url').strip('https://')
+    return url
+
+
+def _get_header_section(scidata_dict: dict) -> str:
+    """
+    Get the header lines section for RRUFF file from SciData JSON-LD dict
+
+    Args:
+        scidata_dict: SciData JSON-LD dictionary
+
+    Returns:
+        List of lines to write for the RRUFF header section
+    """
+    lines = []
+
+    graph = scidata_dict.get("@graph")
+    lines.append(f'##NAMES={graph.get("title")}')
+
+    rruffid = graph.get("uid").strip("rruff:")
+    lines.append(f'##RRUFFID={rruffid}')
+
+    description = scidata_dict.get("@graph").get("description")
+
+    chemistry = _get_ideal_chemistry(scidata_dict)
+    if chemistry:
+        lines.append(f'##IDEAL CHEMISTRY={chemistry}')
+
+    locality = _extract_description_section(description, "LOCALITY")
+    if locality:
+        lines.append(f'##LOCALITY={locality}')
+
+    publisher = graph.get("publisher")
+    lines.append(f'##OWNER={publisher}')
+
+    author = graph.get('author')[0]["name"]
+    lines.append(f'##SOURCE={author}')
+
+    rruff_description = _extract_description_section(
+        description,
+        "DESCRIPTION")
+    if rruff_description:
+        lines.append(f'##DESCRIPTION={rruff_description}')
+
+    status = _extract_description_section(description, "STATUS")
+    if status:
+        lines.append(f'##STATUS={status}')
+
+    laser_wavelength = _get_laser_wavelength(scidata_dict)
+    if laser_wavelength:
+        lines.append(f'##LASER_WAVELENGTH={laser_wavelength}')
+
+    url = _get_rruff_url(scidata_dict)
+    if url:
+        lines.append(f'##URL={url}')
+
+    return '\n'.join(lines) + '\n'
+
+
 def _write_rruff_header_section(
     filename: str, scidata_dict: dict, mode: str = 'w'
 ):
@@ -527,58 +643,7 @@ def _write_rruff_header_section(
     Returns:
         Dictionary of SciData JSON-LD from translation
     """
-    lines = []
-
-    graph = scidata_dict.get("@graph")
-    lines.append(f'##NAMES={graph.get("title")}\n')
-
-    rruffid = graph.get("uid").strip("rruff:")
-    lines.append(f'##RRUFFID={rruffid}\n')
-
-    description = scidata_dict.get("@graph").get("description")
-
-    system = graph.get('scidata').get('system')
-    for facet in system.get('facets'):
-        if facet.get('@id').startswith('material'):
-            chemistry = facet.get('materialType')
-            lines.append(f'##IDEAL CHEMISTRY={chemistry}\n')
-
-    locality = _extract_description_section(description, "LOCALITY")
-    if locality:
-        lines.append(f'##LOCALITY={locality}\n')
-
-    publisher = graph.get("publisher")
-    lines.append(f'##OWNER={publisher}\n')
-
-    author = graph.get('author')[0]["name"]
-    lines.append(f'##SOURCE={author}\n')
-
-    rruff_description = _extract_description_section(
-        description,
-        "DESCRIPTION")
-    if rruff_description:
-        lines.append(f'##DESCRIPTION={rruff_description}\n')
-
-    status = _extract_description_section(description, "STATUS")
-    if status:
-        lines.append(f'##STATUS={status}\n')
-
-    methodology = graph.get('scidata').get('methodology')
-    for aspect in methodology.get('aspects'):
-        if aspect.get('@id').startswith('measurement'):
-            settings = aspect.get('settings')
-            for setting in settings:
-                prop = setting.get('property').lower()
-                if prop.startswith('laser wavelength'):
-                    laser_wavelength = setting.get('value').get('number')
-                    lines.append(f'##LASER_WAVELENGTH={laser_wavelength}\n')
-
-    sources = graph.get('sources')
-    for source in sources:
-        if source.get('url').startswith('https://rruff.info'):
-            url = source.get('url').strip('https://')
-            lines.append(f'##URL={url}\n')
-
+    lines = _get_header_section(scidata_dict)
     with open(filename, mode) as fileobj:
         for line in lines:
             fileobj.write(line)
