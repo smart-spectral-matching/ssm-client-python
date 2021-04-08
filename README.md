@@ -2,6 +2,11 @@
 
 Smart Spectral Matching REST API Python Client
 
+| Branch | Build | Coverage |
+|--------|-------|----------|
+| DEV    | [![DEV](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/badges/dev/pipeline.svg)](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/pipelines/dev/latest) | [![coverage report](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/badges/dev/coverage.svg)](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/commits/dev) |
+| PROD    | [![PROD](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/badges/master/pipeline.svg)](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/pipelines/master/latest) | [![coverage report](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/badges/qa/coverage.svg)](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/commits/master) |
+
 # Installation
 
 ### Using pip
