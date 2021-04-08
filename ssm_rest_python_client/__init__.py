@@ -2,7 +2,7 @@
 
 __author__ = """Marshall McDonnell"""
 __email__ = 'mcdonnellmt@ornl.gov'
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
 from .ssm_rester import SSMRester
 from . import io
