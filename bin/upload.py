@@ -243,14 +243,8 @@ def upload_directories(
             print(f'  {location.name} {i+1} of {total_group_spectra}')
 
             # Skip non-RRUFF files for now
-            if location.name in blacklist:
+            if location.name in blacklist or str(location) in blacklist:
                 print(f'    {location.name} skipped... ***')
-                continue
-
-            # Skip duplicates
-            duplicate_path = curies / location
-            if duplicate_path in blacklist:
-                print(f'    {location} skipped... ***')
                 continue
 
             upload_file(
@@ -262,7 +256,7 @@ def upload_directories(
 
 
 if __name__ == "__main__":
-    curies_directory = "CURIES_20210601"
+    curies_directory = "CURIES"
     group_directories = [
         "Arsenates",
         "Carbonates",
@@ -272,13 +266,20 @@ if __name__ == "__main__":
         "Sulfates",
         "Other U Minerals",
         "Vanadates",
-        "U Oxides",
+        #"U Oxides",
     ]
     workbook = "Master_v2_add_filenames.xlsx"
 
-    hostname = "http://ssm-dev.ornl.gov/api"
+    # Select hostnames
+    local_hostname = "http://localhost:8080/api"
+    dev_hostname = "http://ssm-dev.ornl.gov/api"
+    qa_hostname = "http://ssm-qa.ornl.gov/api"
 
-    blacklist = [
+    hostname = dev_hostname
+
+
+    # Put together blacklist
+    bad_format_files = [
         "enr1_100.dpt",
         "enr1_200.dpt",
         "enr1_300.dpt",
@@ -290,6 +291,26 @@ if __name__ == "__main__":
         "nat_ir_new.txt",
         "enr_ir_new.txt",
     ]
+    ir_spectra_files = [
+        "curienite_IR.txt",
+        "finchite_IR.txt",
+        "metaautunite1_IR.txt",
+        "metatorbernite1_IR.txt",
+        "schrockingerite1_IR.txt",
+        "sklodowskite_IR.txt",
+        "vanuralite_IR.txt",
+    ]
+    duplicate_files = [
+        curies_directory + "/Carbonates/Spectra/schrockingerite1_R_780.txt",
+        curies_directory + "/Carbonates/Spectra/schrockingerite2_R_780.txt",
+        curies_directory + "/Carbonates/Spectra/schrockingerite1_R_532.txt",
+        curies_directory + "/Carbonates/Spectra/schrockingerite2_R_532.txt",
+        curies_directory + "/Phosphates/Spectra/coconinoite_R_532.txt",
+        curies_directory + "/Phosphates/Spectra/coconinoite_R_785.txt",
+        curies_directory + "/Vanadates/Spectra/ammoniomathesiusite_R_532.txt",
+        curies_directory + "/Vanadates/Spectra/ammoniomathesiusite_R_780.txt",
+    ]
+    blacklist = bad_format_files + ir_spectra_files + duplicate_files
 
     upload_directories(
         curies_directory,
