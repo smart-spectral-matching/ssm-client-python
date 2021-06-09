@@ -266,7 +266,7 @@ if __name__ == "__main__":
         "Sulfates",
         "Other U Minerals",
         "Vanadates",
-        #"U Oxides",
+        # "U Oxides",
     ]
     workbook = "Master_v2_add_filenames.xlsx"
 
@@ -276,7 +276,6 @@ if __name__ == "__main__":
     qa_hostname = "http://ssm-qa.ornl.gov/api"
 
     hostname = dev_hostname
-
 
     # Put together blacklist
     bad_format_files = [
