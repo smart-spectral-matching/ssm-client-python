@@ -156,6 +156,36 @@ def get_scidata(
     return scidata_dict
 
 
+def upload_file(
+    rester: ssm.SSMRester,
+    location: pathlib.Path,
+    file_summary_dict: dict,
+    curies: str,
+    workbook: str
+):
+    print('    reading...')
+    try:
+        scidata_dict = get_scidata(
+            location,
+            file_summary_dict,
+            curies,
+            workbook)
+    except KeyError:
+        print(f'ERROR: {location} not found in file summary dict')
+
+    # Upload file to dataset
+    print('    uploading..')
+    while True:
+        try:
+            model = rester.model.create(scidata_dict)
+            print(f'    {hostname}/datasets/{dataset.uuid}/models/{model.uuid}\n') # noqa
+            break
+        except Exception as e:
+            print(f' ERROR: {e}')
+            print('Retrying...')
+            time.sleep(5)
+
+
 def upload_directories(
     curies: str,
     groups: List[str],
@@ -211,6 +241,7 @@ def upload_directories(
         # Loop over spectra for the directory
         for i, location in enumerate(locations):
             print(f'  {location.name} {i+1} of {total_group_spectra}')
+
             # Skip non-RRUFF files for now
             if location.name in blacklist:
                 print(f'    {location.name} skipped... ***')
@@ -222,27 +253,12 @@ def upload_directories(
                 print(f'    {location} skipped... ***')
                 continue
 
-            print('    reading...')
-            try:
-                scidata_dict = get_scidata(
-                    location,
-                    file_summary_dict,
-                    curies,
-                    workbook)
-            except KeyError:
-                print(f'ERROR: {location} not found in file summary dict')
-
-            # Upload file to dataset
-            print('    uploading..')
-            while True:
-                try:
-                    model = rester.model.create(scidata_dict)
-                    print(f'    {hostname}/datasets/{dataset.uuid}/models/{model.uuid}\n') # noqa
-                    break
-                except Exception as e:
-                    print(f' ERROR: {e}')
-                    print('Retrying...')
-                    time.sleep(5)
+            upload_file(
+                rester,
+                location,
+                file_summary_dict,
+                curies,
+                workbook)
 
 
 if __name__ == "__main__":
