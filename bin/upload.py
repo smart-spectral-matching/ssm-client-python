@@ -1,4 +1,3 @@
-import json
 import openpyxl
 from openpyxl.worksheet.worksheet import Worksheet
 import pathlib
@@ -17,14 +16,14 @@ def get_worksheet_data(
 
     data_dict = {}
     for i, row in enumerate(entries):
-        entry = { k:v for k, v in zip(labels, row)}
+        entry = {k: v for k, v in zip(labels, row)}
         key = i
         if key_name:
             key = entry.get(key_name)
         data_dict[key] = entry
 
     return data_dict
-    
+
 
 def get_filenames_to_remove(file_summary_dict: dict) -> List[str]:
     remove_list = []
@@ -35,7 +34,7 @@ def get_filenames_to_remove(file_summary_dict: dict) -> List[str]:
         if not v["File Type"].startswith("Spectra"):
             remove_list.append(k)
             continue
-        if not "Raman" in v["File Type"]:
+        if "Raman" not in v["File Type"]:
             remove_list.append(k)
     return remove_list
 
@@ -56,9 +55,14 @@ def get_functional_group_list(curies: str, workbook: str) -> list:
 
     return functional_group_list
 
-def get_file_summary_dict(curies: str, groups: List[str], workbook: str) -> dict:
+
+def get_file_summary_dict(
+    curies: str,
+    groups: List[str],
+    workbook: str
+) -> dict:
     '''
-    Get the file summary dictionary for metadata from the workbook for all of CURIES
+    Get the file summary dict for metadata from the workbook for all of CURIES
     '''
     curies_path = pathlib.Path(curies)
 
@@ -66,11 +70,13 @@ def get_file_summary_dict(curies: str, groups: List[str], workbook: str) -> dict
     wb_path = curies_path / workbook
     wb = openpyxl.load_workbook(filename=wb_path, read_only=True)
 
-    # Get the dictionary for the files summary worksheet 
+    # Get the dict for the files summary worksheet
     file_summary_dict = get_worksheet_data(wb['Files Summary'], key_name=None)
 
-    # Get the dictionary for the mineral data worksheet + list of functional groups
-    mineral_data_dict = get_worksheet_data(wb['Mineral Data'], key_name='Mineral Name')
+    # Get the dict for the mineral data worksheet + list of functional groups
+    mineral_data_dict = get_worksheet_data(
+        wb['Mineral Data'],
+        key_name='Mineral Name')
 
     # Filter out non-spectra data from file summary
     remove_list = get_filenames_to_remove(file_summary_dict)
@@ -89,7 +95,12 @@ def get_file_summary_dict(curies: str, groups: List[str], workbook: str) -> dict
     return file_summary_dict
 
 
-def get_scidata(location: pathlib.Path, file_summary_dict: dict, curies: str, workbook: str) -> dict:
+def get_scidata(
+    location: pathlib.Path,
+    file_summary_dict: dict,
+    curies: str,
+    workbook: str
+) -> dict:
     # Get SciData dictionary from file
     scidata_dict = ssm.io.read(location.absolute(), ioformat="rruff")
 
@@ -98,7 +109,7 @@ def get_scidata(location: pathlib.Path, file_summary_dict: dict, curies: str, wo
     space_group_dict = {
         "@id": "datapoint/1/",
         "@type": "sdo:datapoint",
-        "url": "http://www.iucr.org/__data/iucr/cifdic_html/1/cif_core.dic/Ispace_group_IT_number.html",
+        "url": "http://www.iucr.org/__data/iucr/cifdic_html/1/cif_core.dic/Ispace_group_IT_number.html", # noqa
         "quantity": "space group descriptor",
         "property": "space_group_IT_number",
         "value": {
@@ -119,7 +130,7 @@ def get_scidata(location: pathlib.Path, file_summary_dict: dict, curies: str, wo
         "@id": "compound/1/",
         "@type": "sdo:compound",
         "formula": formula,
-        "name": mineral_name ,
+        "name": mineral_name,
     }
     facets.append(formula_dict)
     scidata_dict["@graph"]["scidata"]["system"]["facets"] = facets
@@ -145,7 +156,15 @@ def get_scidata(location: pathlib.Path, file_summary_dict: dict, curies: str, wo
     return scidata_dict
 
 
-def upload_directories(curies, groups, hostname, workbook, limit_spectra=None, blacklist=None, dataset_uuid=None):
+def upload_directories(
+    curies: str,
+    groups: List[str],
+    hostname: str,
+    workbook: str,
+    limit_spectra: int = None,
+    blacklist: List[str] = None,
+    dataset_uuid: str = None
+):
     """
     """
     curies_path = pathlib.Path(curies)
@@ -189,7 +208,6 @@ def upload_directories(curies, groups, hostname, workbook, limit_spectra=None, b
         print(f'  Dataset URI: {hostname}/datasets/{dataset.uuid}')
         print(f'  Number of spectra: {total_group_spectra}\n')
 
-
         # Loop over spectra for the directory
         for i, location in enumerate(locations):
             print(f'  {location.name} {i+1} of {total_group_spectra}')
@@ -204,18 +222,22 @@ def upload_directories(curies, groups, hostname, workbook, limit_spectra=None, b
                 print(f'    {location} skipped... ***')
                 continue
 
-            print(f'    reading...')
+            print('    reading...')
             try:
-                scidata_dict = get_scidata(location, file_summary_dict, curies, workbook)
+                scidata_dict = get_scidata(
+                    location,
+                    file_summary_dict,
+                    curies,
+                    workbook)
             except KeyError:
-                print(f'ERROR: issue with {location} not found in file summary dictionary')
+                print(f'ERROR: {location} not found in file summary dict')
 
             # Upload file to dataset
-            print(f'    uploading..')
+            print('    uploading..')
             while True:
                 try:
-                    model = rester.model.create(scidata_dict)    
-                    print(f'    {hostname}/datasets/{dataset.uuid}/models/{model.uuid}\n')
+                    model = rester.model.create(scidata_dict)
+                    print(f'    {hostname}/datasets/{dataset.uuid}/models/{model.uuid}\n') # noqa
                     break
                 except Exception as e:
                     print(f' ERROR: {e}')
@@ -253,4 +275,9 @@ if __name__ == "__main__":
         "enr_ir_new.txt",
     ]
 
-    upload_directories(curies_directory, group_directories, hostname, workbook, blacklist=blacklist)
+    upload_directories(
+        curies_directory,
+        group_directories,
+        hostname,
+        workbook,
+        blacklist=blacklist)
