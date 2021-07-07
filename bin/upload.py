@@ -158,6 +158,7 @@ def get_scidata(
 
 def upload_file(
     rester: ssm.SSMRester,
+    dataset_title: str,
     location: pathlib.Path,
     file_summary_dict: dict,
     curies: str,
@@ -178,7 +179,7 @@ def upload_file(
     while True:
         try:
             model = rester.model.create(scidata_dict)
-            print(f'    {hostname}/datasets/{dataset.uuid}/models/{model.uuid}\n') # noqa
+            print(f'    {hostname}/datasets/{dataset_title}/models/{model.uuid}\n') # noqa
             break
         except Exception as e:
             print(f' ERROR: {e}')
@@ -193,7 +194,7 @@ def upload_directories(
     workbook: str,
     limit_spectra: int = None,
     blacklist: List[str] = None,
-    dataset_uuid: str = None
+    dataset_title: str = None
 ):
     """
     """
@@ -207,10 +208,10 @@ def upload_directories(
     rester = ssm.SSMRester(hostname=hostname)
 
     # Setup dataset
-    if dataset_uuid:
-        dataset = rester.dataset.get_by_uuid(dataset_uuid)
+    if dataset_title:
+        dataset = rester.dataset.get_by_title(dataset_title)
     else:
-        dataset = rester.dataset.create()
+        dataset = rester.dataset.create("curies")
 
     # Get file summary dict
     file_summary_dict = get_file_summary_dict(curies, groups, workbook)
@@ -235,7 +236,7 @@ def upload_directories(
         if limit_spectra:
             locations = list(locations)[0:limit_spectra]
 
-        print(f'  Dataset URI: {hostname}/datasets/{dataset.uuid}')
+        print(f'  Dataset URI: {hostname}/datasets/{dataset.title}')
         print(f'  Number of spectra: {total_group_spectra}\n')
 
         # Loop over spectra for the directory
@@ -249,6 +250,7 @@ def upload_directories(
 
             upload_file(
                 rester,
+                dataset.title,
                 location,
                 file_summary_dict,
                 curies,
