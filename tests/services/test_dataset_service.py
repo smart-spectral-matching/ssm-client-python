@@ -21,7 +21,7 @@ def test_create(dataset_service, requests_mock):  # noqa: F811
     json = {'title': title, 'uri': uri}
 
     requests_mock.post(dataset_service._endpoint(), json=json)
-    dataset = dataset_service.create()
+    dataset = dataset_service.create(title)
     assert len(dataset.title) == 64
     assert dataset.uri.__contains__(dataset.title)
 
@@ -33,7 +33,7 @@ def test_read(dataset_service, requests_mock):  # noqa: F811
     json = {'title': title, 'uri': uri}
 
     requests_mock.post(dataset_service._endpoint(), json=json)
-    dataset = dataset_service.create()
+    dataset = dataset_service.create(title)
 
     requests_mock.get(dataset_service._endpoint(title), json=json)
     grabbed_dataset = dataset_service.get_by_title(dataset.title)
@@ -47,7 +47,7 @@ def test_delete(dataset_service, requests_mock):  # noqa: F811
     json = {'title': title, 'uri': uri}
 
     requests_mock.post(dataset_service._endpoint(), json=json)
-    dataset = dataset_service.create()
+    dataset = dataset_service.create(title)
 
     requests_mock.get(dataset_service._endpoint(title), json=json)
     grabbed_dataset = dataset_service.get_by_title(dataset.title)

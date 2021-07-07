@@ -22,7 +22,7 @@ def test_dataset_create(ssm_rester, requests_mock):  # noqa: F811
     json = {'title': title, 'uri': uri}
 
     requests_mock.post(ssm_rester.dataset._endpoint(), json=json)
-    dataset = ssm_rester.dataset.create()
+    dataset = ssm_rester.dataset.create(title)
     assert len(dataset.title) == 64
     assert dataset.uri.__contains__(dataset.title)
 
@@ -34,7 +34,7 @@ def test_dataset_read(ssm_rester, requests_mock):  # noqa: F811
     json = {'title': title, 'uri': uri}
 
     requests_mock.post(ssm_rester.dataset._endpoint(), json=json)
-    dataset = ssm_rester.dataset.create()
+    dataset = ssm_rester.dataset.create(title)
 
     requests_mock.get(ssm_rester.dataset._endpoint(title), json=json)
     grabbed_dataset = ssm_rester.dataset.get_by_title(dataset.title)
@@ -48,7 +48,7 @@ def test_dataset_delete(ssm_rester, requests_mock):  # noqa: F811
     json = {'title': title, 'uri': uri}
 
     requests_mock.post(ssm_rester.dataset._endpoint(), json=json)
-    dataset = ssm_rester.dataset.create()
+    dataset = ssm_rester.dataset.create(title)
 
     requests_mock.get(ssm_rester.dataset._endpoint(title), json=json)
     grabbed_dataset = ssm_rester.dataset.get_by_title(dataset.title)
