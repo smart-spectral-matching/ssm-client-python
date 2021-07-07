@@ -56,9 +56,9 @@ def model_uuid():
 
 @pytest.fixture
 def dataset():
-    dataset_uuid = 64 * "X"
-    uri = "http://localhost/{}".format(dataset_uuid)
-    return DatasetContainer(uuid=dataset_uuid, uri=uri)
+    dataset_title = 64 * "X"
+    uri = "http://localhost/{}".format(dataset_title)
+    return DatasetContainer(title=dataset_title, uri=uri)
 
 
 @pytest.fixture
@@ -70,14 +70,14 @@ def test_construction(dataset):
     """Tests construction of ModelService object"""
     model = ModelService(dataset=dataset)
     assert model.hostname == "http://localhost"
-    assert model.dataset_uuid == dataset.uuid
+    assert model.dataset_title == dataset.title
 
-    model = ModelService(dataset=dataset, dataset_uuid=dataset.uuid)
+    model = ModelService(dataset=dataset, dataset_title=dataset.title)
     assert model.hostname == "http://localhost"
-    assert model.dataset_uuid == dataset.uuid
+    assert model.dataset_title == dataset.title
 
     with pytest.raises(MismatchedDatasetException):
-        ModelService(dataset=dataset, dataset_uuid=64*"Z")
+        ModelService(dataset=dataset, dataset_title=64*"Z")
 
 
 def test_create(model_input, model_output, model_uuid, model_service, requests_mock):  # noqa: F811, E501

@@ -7,7 +7,7 @@ _MODELS_ENDPOINT = "models"
 
 
 class MismatchedDatasetException(Exception):
-    """Raised when DatasetContainer UUID doesn't match same UUID passed in"""
+    """Raised when DatasetContainer title doesn't match same title passed in"""
 
 
 class ModelService:
@@ -15,34 +15,34 @@ class ModelService:
             self,
             hostname="http://localhost",
             dataset=None,
-            dataset_uuid=None):
+            dataset_title=None):
         """
         Initialize a DatasetService object
 
         Args:
             hostname (str): Hostname for the SSM REST API server
             dataset (DatasetContainer): Dataset the Models will belong to
-            dataset_uuid (str): UUID of the Dataset the Models will belong to
+            dataset_title (str): Title of the Dataset the Models will belong to
 
         Raises:
             MistmatchedDatasetException:
-                Raised when Dataset and UUID both passed in and do not match
+                Raised when Dataset and title both passed in and do not match
         """
         self.hostname = hostname
 
-        if dataset and dataset_uuid:
-            if dataset.uuid != dataset_uuid:
-                msg = "Dataset: {dataset_uuid} and UUID: {uuid} NOT equal!\n"
-                msg = "Trying using one method, either the Dataset OR the UUID"
+        if dataset and dataset_title:
+            if dataset.title != dataset_title:
+                msg = "Dataset: {dataset_title} and title: {title} NOT equal!\n"
+                msg = "Trying using one method, either the Dataset OR the title"
                 msg = msg.format(
-                    dataset_uuid=dataset.uuid,
-                    uuid=dataset_uuid
+                    dataset_title=dataset.title,
+                    uuid=dataset_title
                 )
                 raise MismatchedDatasetException(msg)
 
-        self.dataset_uuid = dataset_uuid
+        self.dataset_title = dataset_title
         if dataset:
-            self.dataset_uuid = dataset.uuid
+            self.dataset_title = dataset.title
 
     def _endpoint(self, model=None):
         """
@@ -56,7 +56,7 @@ class ModelService:
         """
         endpoint = []
         endpoint.append(f'{self.uri}/{_DATASETS_ENDPOINT}')
-        endpoint.append(f'{self.dataset_uuid}/{_MODELS_ENDPOINT}')
+        endpoint.append(f'{self.dataset_title}/{_MODELS_ENDPOINT}')
         if model:
             endpoint.append(f'/{model}')
         return '/'.join(endpoint)

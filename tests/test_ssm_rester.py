@@ -17,56 +17,56 @@ def ssm_rester():
 
 def test_dataset_create(ssm_rester, requests_mock):  # noqa: F811
     """Test creating dataset w/ client"""
-    uuid = 64 * "X"
-    uri = "http://localhost/{}".format(uuid)
-    json = {'uuid': uuid, 'uri': uri}
+    title = 64 * "X"
+    uri = "http://localhost/{}".format(title)
+    json = {'title': title, 'uri': uri}
 
     requests_mock.post(ssm_rester.dataset._endpoint(), json=json)
     dataset = ssm_rester.dataset.create()
-    assert len(dataset.uuid) == 64
-    assert dataset.uri.__contains__(dataset.uuid)
+    assert len(dataset.title) == 64
+    assert dataset.uri.__contains__(dataset.title)
 
 
 def test_dataset_read(ssm_rester, requests_mock):  # noqa: F811
     """Test read dataset w/ client"""
-    uuid = "foo"
+    title = "foo"
     uri = "bar"
-    json = {'uuid': uuid, 'uri': uri}
+    json = {'title': title, 'uri': uri}
 
     requests_mock.post(ssm_rester.dataset._endpoint(), json=json)
     dataset = ssm_rester.dataset.create()
 
-    requests_mock.get(ssm_rester.dataset._endpoint(uuid), json=json)
-    grabbed_dataset = ssm_rester.dataset.get_by_uuid(dataset.uuid)
+    requests_mock.get(ssm_rester.dataset._endpoint(title), json=json)
+    grabbed_dataset = ssm_rester.dataset.get_by_title(dataset.title)
     assert dataset == grabbed_dataset
 
 
 def test_dataset_delete(ssm_rester, requests_mock):  # noqa: F811
     """Test deleting dataset w/ client"""
-    uuid = "foo"
+    title = "foo"
     uri = "bar"
-    json = {'uuid': uuid, 'uri': uri}
+    json = {'title': title, 'uri': uri}
 
     requests_mock.post(ssm_rester.dataset._endpoint(), json=json)
     dataset = ssm_rester.dataset.create()
 
-    requests_mock.get(ssm_rester.dataset._endpoint(uuid), json=json)
-    grabbed_dataset = ssm_rester.dataset.get_by_uuid(dataset.uuid)
+    requests_mock.get(ssm_rester.dataset._endpoint(title), json=json)
+    grabbed_dataset = ssm_rester.dataset.get_by_title(dataset.title)
     assert dataset == grabbed_dataset
 
-    requests_mock.delete(ssm_rester.dataset._endpoint(uuid))
-    ssm_rester.dataset.delete_by_uuid(dataset.uuid)
+    requests_mock.delete(ssm_rester.dataset._endpoint(title))
+    ssm_rester.dataset.delete_by_title(dataset.title)
 
-    requests_mock.get(ssm_rester.dataset._endpoint(uuid), status_code=404)
+    requests_mock.get(ssm_rester.dataset._endpoint(title), status_code=404)
     with pytest.raises(requests.HTTPError):
-        ssm_rester.dataset.get_by_uuid(dataset.uuid)
+        ssm_rester.dataset.get_by_title(dataset.title)
 
 
 def test_initialize_model_for_dataset(ssm_rester):
     """Test initializing the model for a dataset"""
-    dataset_uuid = 64 * "X"
-    uri = "http://localhost/{}".format(dataset_uuid)
-    dataset = DatasetContainer(uuid=dataset_uuid, uri=uri)
+    dataset_title = 64 * "X"
+    uri = "http://localhost/{}".format(dataset_title)
+    dataset = DatasetContainer(title=dataset_title, uri=uri)
     ssm_rester.initialize_model_for_dataset(dataset)
     assert ssm_rester.model.hostname == ssm_rester.hostname
-    assert ssm_rester.model.dataset_uuid == dataset_uuid
+    assert ssm_rester.model.dataset_title == dataset_title

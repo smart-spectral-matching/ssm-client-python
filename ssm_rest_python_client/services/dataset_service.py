@@ -20,7 +20,7 @@ class DatasetService:
         Helper function to form the address of the `datasets` endpoint
 
         Args:
-            dataset (str): 64-character UUID to access a give dataset
+            dataset (str): title to access a give dataset
 
         Returns:
             endpoint (str): Datasets endpoint to use
@@ -47,32 +47,32 @@ class DatasetService:
         response = requests.post(self._endpoint())
         return DatasetContainer(**response.json())
 
-    def get_by_uuid(self, uuid):
+    def get_by_title(self, title):
         """
-        Get dataset for given UUID at SSM REST API
+        Get dataset for given title at SSM REST API
 
         Args:
-            uuid (str): 64-character UUID for dataset
+            title (str): title for dataset
 
         Raises:
             requests.HTTPError: Raised when we cannot find the Dataset
 
         Returns:
-            dataset (DatasetContainer): DatasetContainer object with given UUID
+            dataset (DatasetContainer): DatasetContainer object with given title 
         """
-        response = requests.get(self._endpoint(uuid))
+        response = requests.get(self._endpoint(title))
         response.raise_for_status()
         return DatasetContainer(**response.json())
 
-    def delete_by_uuid(self, uuid):
+    def delete_by_title(self, title):
         """
-        Delete the dataset for given UUID at SSM REST API
+        Delete the dataset for given title at SSM REST API
 
         Args:
-            uuid (str): 64-character UUID for dataset
+            title (str): 64-character title for dataset
 
         Raises:
             requests.HTTPError: Raised when we cannot find the Dataset
         """
-        response = requests.delete(self._endpoint(uuid))
+        response = requests.delete(self._endpoint(title))
         response.raise_for_status()

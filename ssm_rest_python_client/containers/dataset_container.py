@@ -3,7 +3,7 @@ import json
 
 class DatasetContainer:
     def __init__(self, **kwargs):
-        self.__uuid = kwargs.get('uuid', None)
+        self.__title = kwargs.get('title', None)
         self.__uri = kwargs.get('uri', None)
 
     def __eq__(self, other):
@@ -16,9 +16,9 @@ class DatasetContainer:
         Return:
             areDatasetsEqual (bool)
         """
-        uuidEqual = self.uuid == other.uuid
+        titleEqual = self.title == other.title
         uriEqual = self.uri == other.uri
-        return uuidEqual and uriEqual
+        return titleEqual and uriEqual
 
     def __ne__(self, other):
         """
@@ -31,27 +31,27 @@ class DatasetContainer:
             areDatasetsNotEqual (bool)
         """
 
-        uuidNotEqual = self.uuid != other.uuid
+        titleNotEqual = self.title != other.title
         uriNotEqual = self.uri != other.uri
-        return uuidNotEqual or uriNotEqual
+        return titleNotEqual or uriNotEqual
 
     def __repr__(self):
         dataset_dict = {
-            "uuid": self.uuid,
+            "title": self.title,
             "uri": self.uri,
         }
         return json.dumps(dataset_dict)
 
     def __str__(self):
-        fmt = "DatasetContainer(uuid={uuid},uri={uri})"
-        return fmt.format(uuid=self.uuid, uri=self.uri)
+        fmt = "DatasetContainer(title={title},uri={uri})"
+        return fmt.format(title=self.title, uri=self.uri)
 
     @property
-    def uuid(self):
+    def title(self):
         """
-        UUID for DatasetContainer
+        Title for DatasetContainer
         """
-        return self.__uuid
+        return self.__title
 
     @property
     def uri(self):
