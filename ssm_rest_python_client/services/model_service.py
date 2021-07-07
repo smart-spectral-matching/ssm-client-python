@@ -32,11 +32,13 @@ class ModelService:
 
         if dataset and dataset_title:
             if dataset.title != dataset_title:
-                msg = "Dataset: {dataset_title} and title: {title} NOT equal!\n"
-                msg = "Trying using one method, either the Dataset OR the title"
+                msg = (
+                    "Dataset: {dataset_title} and title: {title} NOT equal!\n"
+                    "Trying using one method, either the Dataset OR the title"
+                )
                 msg = msg.format(
                     dataset_title=dataset.title,
-                    uuid=dataset_title
+                    title=dataset_title
                 )
                 raise MismatchedDatasetException(msg)
 

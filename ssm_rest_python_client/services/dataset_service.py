@@ -62,7 +62,8 @@ class DatasetService:
             requests.HTTPError: Raised when we cannot find the Dataset
 
         Returns:
-            dataset (DatasetContainer): DatasetContainer object with given title 
+            dataset (DatasetContainer): DatasetContainer object
+                with given title
         """
         response = requests.get(self._endpoint(title))
         response.raise_for_status()
