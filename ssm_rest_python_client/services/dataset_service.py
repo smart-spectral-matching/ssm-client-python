@@ -37,14 +37,18 @@ class DatasetService:
         """
         return f'{self.hostname}'
 
-    def create(self):
+    def create(self, title):
         """
         Create a new dataset at SSM REST API
 
+        Args:
+            title (str): title for dataset
         Returns:
             dataset (DatasetContainer): Created DatasetContainer object
         """
-        response = requests.post(self._endpoint())
+        json = {"title": title}
+        response = requests.post(self._endpoint(), json=json)
+        response.raise_for_status()
         return DatasetContainer(**response.json())
 
     def get_by_title(self, title):
