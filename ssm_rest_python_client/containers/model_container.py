@@ -36,11 +36,11 @@ class ModelContainer:
         return uuidNotEqual or modelNotEqual
 
     def __repr__(self):
-        dataset_dict = {
+        model_dict = {
             "uuid": self.uuid,
             "model": self.model,
         }
-        return json.dumps(dataset_dict)
+        return json.dumps(model_dict)
 
     def __str__(self):
         fmt = "ModelContainer(\nuuid={uuid},\nmodel={model}\n)"
