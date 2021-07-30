@@ -4,6 +4,7 @@ stages:
 
 variables:
     GIT_STRATEGY: clone
+    PYTHON_IMAGE: "code.ornl.gov:4567/rse/datastreams/ssm/clients/ssm-rest-python-client/python:3.6"
 
 include:
      remote: "https://code.ornl.gov/rse-deployment/rse-sharables/-/raw/master/.gitlab-ci-before_script.yml"
@@ -72,7 +73,9 @@ upload-package:
     stage: deploy
     script:
         - func_rse_docker_cleanup
-        - docker run -v $(pwd):/app -w /app  python:3.6 bash -c "pip install pipenv && pipenv install --dev && pipenv run make dist && TWINE_PASSWORD=${DEPLOY_TOKEN} TWINE_USERNAME=${DEPLOY_TOKEN_USERNAME} PROJECT_URL=https://code.ornl.gov/api/v4/projects/${CI_PROJECT_ID}/packages/pypi pipenv run make release-use-url"
+        - docker login --username=$CI_REGISTRY_USER --password=$CI_REGISTRY_PASSWORD $CI_REGISTRY
+        - docker pull ${PYTHON_IMAGE}
+        - docker run -v $(pwd):/app -w /app  ${PYTHON_IMAGE} bash -c "pip install pipenv && pipenv install --dev && pipenv run make dist && TWINE_PASSWORD=${DEPLOY_TOKEN} TWINE_USERNAME=${DEPLOY_TOKEN_USERNAME} PROJECT_URL=https://code.ornl.gov/api/v4/projects/${CI_PROJECT_ID}/packages/pypi pipenv run make release-use-url"
         - sudo chown -R gitlab-runner .
         - func_rse_docker_cleanup
     tags:
