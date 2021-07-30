@@ -4,6 +4,7 @@ import pathlib
 import ssm_rest_python_client as ssm
 import time
 from typing import List
+import warnings
 
 
 def get_worksheet_data(
@@ -177,14 +178,21 @@ def upload_file(
     # Upload file to dataset
     print('    uploading..')
     while True:
-        try:
-            model = rester.model.create(scidata_dict)
-            print(f'    {hostname}/datasets/{dataset_title}/models/{model.uuid}\n') # noqa
-            break
-        except Exception as e:
-            print(f' ERROR: {e}')
-            print('Retrying...')
-            time.sleep(5)
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error')
+            try:
+                model = rester.model.create(scidata_dict)
+                print(f'    {hostname}/datasets/{dataset_title}/models/{model.uuid}\n') # noqa
+                break
+            except Warning as w:
+                print(f'ERROR: {w}')
+                print("  Model not uploaded!!!")
+                print()
+                break
+            except Exception as e:
+                print(f' ERROR: {e}')
+                print('Retrying...')
+                time.sleep(5)
 
 
 def upload_directories(
