@@ -67,6 +67,6 @@ setup(
     tests_require=setup_args['install_requires'] + setup_args['tests_require'],
     test_suite='tests',
     url=GITLAB_REPO + 'ssm-rest-python-client.git',
-    version='0.2.0',
+    version='0.3.0',
     zip_safe=False,
 )
