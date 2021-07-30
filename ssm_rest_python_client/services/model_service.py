@@ -1,4 +1,5 @@
 import requests
+import warnings
 
 from ssm_rest_python_client.containers import ModelContainer
 from .dataset_service import _DATASETS_ENDPOINT
@@ -83,6 +84,16 @@ class ModelService:
         Returns:
             model (ModelContainer): Created ModelContainer object
         """
+        # Providing warnings for "critical" sections to allow try-catch logic
+        # for this function
+        if not model.get("@graph"):
+            msg = 'No "@graph" section found for JSON-LD.'
+            warnings.warn(msg)
+        else:
+            if not model.get("@graph").get("title"):
+                msg = 'No title found in "@graph" section of JSON-LD.'
+                warnings.warn(msg)
+
         response = requests.post(self._endpoint(), json=model)
         response.raise_for_status()
         return ModelContainer(**response.json())
