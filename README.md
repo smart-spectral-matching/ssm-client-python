@@ -2,10 +2,10 @@
 
 Smart Spectral Matching REST API Python Client
 
-| Branch | Build | Coverage |
-|--------|-------|----------|
-| DEV    | [![DEV](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/badges/dev/pipeline.svg)](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/pipelines/dev/latest) | [![coverage report](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/badges/dev/coverage.svg)](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/commits/dev) |
-| PROD    | [![PROD](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/badges/master/pipeline.svg)](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/pipelines/master/latest) | [![coverage report](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/badges/master/coverage.svg)](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/commits/master) |
+| Branch  | Build | Coverage |
+|---------|-------|----------|
+| NEXT    | [![NEXT](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/badges/next/pipeline.svg)](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/pipelines/next/latest) | [![coverage report](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/badges/next/coverage.svg)](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/commits/next) |
+| PROD    | [![PROD](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/badges/main/pipeline.svg)](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/pipelines/main/latest) | [![coverage report](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/badges/main/coverage.svg)](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/commits/main) |
 
 # Installation
 
