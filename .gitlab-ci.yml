@@ -17,7 +17,7 @@ lint:
         - docker run ssm-rest-python-client-lint pipenv run make lint
         - func_rse_docker_cleanup
     tags:
-        - rse-ssm-builder
+        - rse-multi-builder
 
 lint-complexity:
     stage: build
@@ -28,7 +28,7 @@ lint-complexity:
         - docker run ssm-rest-python-client-lint pipenv run make lint-complexity
         - func_rse_docker_cleanup
     tags:
-        - rse-ssm-builder
+        - rse-multi-builder
     allow_failure: true
 
 test:
@@ -40,7 +40,7 @@ test:
         - docker run ssm-rest-python-client-test pipenv run make test
         - func_rse_docker_cleanup
     tags:
-        - rse-ssm-builder
+        - rse-multi-builder
 
 coverage:
     stage: build
@@ -51,7 +51,7 @@ coverage:
         - docker run ssm-rest-python-client-coverage pipenv run make coverage
         - func_rse_docker_cleanup
     tags:
-        - rse-ssm-builder
+        - rse-multi-builder
 
 test-all:
     stage: build
@@ -62,7 +62,7 @@ test-all:
         - docker run ssm-rest-python-client-test-all pipenv run make test-all
         - func_rse_docker_cleanup
     tags:
-        - rse-ssm-builder
+        - rse-multi-builder
     only:
         - dev
         - master
@@ -76,6 +76,6 @@ upload-package:
         - sudo chown -R gitlab-runner .
         - func_rse_docker_cleanup
     tags:
-        - rse-ssm-builder
+        - rse-multi-builder
     only:
         - tags
