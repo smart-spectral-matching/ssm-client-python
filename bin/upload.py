@@ -1,5 +1,6 @@
 import openpyxl
 from openpyxl.worksheet.worksheet import Worksheet
+from openpyxl.workbook.workbook import Workbook
 import pathlib
 import ssm_rest_python_client as ssm
 import time
@@ -40,19 +41,33 @@ def get_filenames_to_remove(file_summary_dict: dict) -> List[str]:
     return remove_list
 
 
+def get_mineral_data_worksheet(curies: str, workbook: str) -> Worksheet:
+    '''
+    Get the mineral data workbook
+    '''
+    curies_path = pathlib.Path(curies)
+    wb_path = curies_path / workbook
+    wb = openpyxl.load_workbook(filename=wb_path, read_only=True)
+    mineral_data_worksheet = wb['Mineral Data']
+    return mineral_data_worksheet
+
+
 def get_functional_group_list(curies: str, workbook: str) -> list:
     '''
     Pull out the functional group list from the workbook
     '''
-    # Master workbook with additional metadata
-    curies_path = pathlib.Path(curies)
-    wb_path = curies_path / workbook
-    wb = openpyxl.load_workbook(filename=wb_path, read_only=True)
+    # Constants
+    first_functional_group_label = "U"
+    last_functional_group_label = "Th"
+
+    # Get "Mineral Data" worksheet and functional group labels from worksheet
+    ws = get_mineral_data_worksheet(curies, workbook)
+    labels = list(ws.values)[0]
 
     # Get functional group list
-    functional_groups_start_index = 12
-    labels = list(wb['Mineral Data'].values)[0]
-    functional_group_list = labels[functional_groups_start_index:]
+    start = labels.index(first_functional_group_label)
+    stop = labels.index(last_functional_group_label)
+    functional_group_list = labels[start:stop]
 
     return functional_group_list
 
@@ -96,6 +111,38 @@ def get_file_summary_dict(
     return file_summary_dict
 
 
+def get_formula_dict(file_summary_dict, location):
+    formula = file_summary_dict[location]["Formula"]
+    mineral_name = file_summary_dict[location]["Mineral Name"]
+    formula_dict = {
+        "@id": "compound/1/",
+        "@type": "sdo:compound",
+        "formula": formula,
+        "name": mineral_name,
+    }
+    return formula_dict
+
+
+def get_structure_type_dict(file_summary_dict, location):
+    structure_type = file_summary_dict[location]["Structure type"]
+    structure_type_dict = {
+        "@id": "structuretype/1/",
+        "@type": "sdo:value",
+        "structure type": structure_type,
+    }
+    return structure_type_dict
+
+
+def get_crystal_system_dict(file_summary_dict, location):
+    crystal_system = file_summary_dict[location]["Crystal System"]
+    crystal_system_dict = {
+        "@id": "crystalsystem/1/",
+        "@type": "sdo:value",
+        "crystal system": crystal_system,
+    }
+    return crystal_system_dict
+
+
 def get_scidata(
     location: pathlib.Path,
     file_summary_dict: dict,
@@ -124,15 +171,8 @@ def get_scidata(
     )
 
     # Add formula to SciData
+    formula_dict = get_formula_dict(file_summary_dict, location)
     facets = scidata_dict["@graph"]["scidata"]["system"]["facets"]
-    formula = file_summary_dict[location]["Formula"]
-    mineral_name = file_summary_dict[location]["Mineral Name"]
-    formula_dict = {
-        "@id": "compound/1/",
-        "@type": "sdo:compound",
-        "formula": formula,
-        "name": mineral_name,
-    }
     facets.append(formula_dict)
     scidata_dict["@graph"]["scidata"]["system"]["facets"] = facets
 
@@ -152,6 +192,18 @@ def get_scidata(
             "multiplicity": multiplicity
         }
         facets.append(new_facet)
+    scidata_dict["@graph"]["scidata"]["system"]["facets"] = facets
+
+    # Add structure type
+    structure_type_dict = get_structure_type_dict(file_summary_dict, location)
+    facets = scidata_dict["@graph"]["scidata"]["system"]["facets"]
+    facets.append(structure_type_dict)
+    scidata_dict["@graph"]["scidata"]["system"]["facets"] = facets
+
+    # Add crystal system
+    crystal_system_dict = get_crystal_system_dict(file_summary_dict, location)
+    facets = scidata_dict["@graph"]["scidata"]["system"]["facets"]
+    facets.append(crystal_system_dict)
     scidata_dict["@graph"]["scidata"]["system"]["facets"] = facets
 
     return scidata_dict
@@ -278,7 +330,7 @@ if __name__ == "__main__":
         "Vanadates",
         # "U Oxides",
     ]
-    workbook = "Master_v2_add_filenames.xlsx"
+    workbook = "Master.xlsx"
 
     # Select hostnames
     local_hostname = "http://localhost:8080/api"
@@ -300,6 +352,46 @@ if __name__ == "__main__":
         "nat_ir_new.txt",
         "enr_ir_new.txt",
     ]
+    new_sulfates_bad_format = [
+        "ammoniomathesiusite_R_785.txt",
+        "ammoniozippeite1_R_785.txt",
+        "ammoniozippeite2_R_785.txt",
+        "ammoniozippeite3_R_785.txt",
+        "ammoniozippeite4_R_785.txt",
+        "belakovskiite1_R_785.txt",
+        "belakovskiite2_R_785.txt",
+        "bluelizardite1_R_785.txt",
+        "bluelizardite2_R_785.txt",
+        "CoZippeite1_R_532.txt",
+        "CoZippeite1_R_785.txt",
+        "CoZippeite2_R_785.txt",
+        "CoZippeite3_R_785.txt",
+        "fermiite_R_785.txt",
+        "johannite1_R_785.txt",
+        "johannite2_R_785.txt",
+        "lussierite_R_785.txt",
+        "marecottite1_R_785.txt",
+        "marecottite2_R_785.txt",
+        "meisserite1_R_785.txt",
+        "messierite_R_532.txt",
+        "natrozippeiteBlueLizard1_R_785.txt",
+        "natrozippeiteBlueLizard2_R_785.txt",
+        "natrozippeiteBlueLizard3_R_785.txt",
+        "natrozippeiteBlueLizard4_R_785.txt",
+        "natrozippeiteBlueLizard5_R_785.txt",
+        "natrozippeiteBurro_R_785.txt",
+        "natrozippeiteMarkey1_R_785.txt",
+        "natrozippeiteMarkey2_R_785.txt",
+        "navrotskyite1_R_785.txt",
+        "navrotskyite2_R_785.txt",
+        "plasilite1_R_785.txt",
+        "plasilite2_R_785.txt",
+        "reitveldite_R_785.txt",
+        "uranopilite_R_785.txt",
+        "ZnZippeite1_R_785.txt",
+        "ZnZippeite2_R_785.txt",
+        "ZnZippeite3_R_785.txt",
+    ]
     ir_spectra_files = [
         "curienite_IR.txt",
         "finchite_IR.txt",
@@ -319,8 +411,15 @@ if __name__ == "__main__":
         curies_directory + "/Vanadates/Spectra/ammoniomathesiusite_R_532.txt",
         curies_directory + "/Vanadates/Spectra/ammoniomathesiusite_R_780.txt",
     ]
-    blacklist = bad_format_files + ir_spectra_files + duplicate_files
 
+    # Create aggregated blacklist of files
+    blacklist = list()
+    blacklist += bad_format_files
+    blacklist += ir_spectra_files
+    blacklist += duplicate_files
+    blacklist += new_sulfates_bad_format
+
+    # Upload CURIES
     upload_directories(
         curies_directory,
         group_directories,
