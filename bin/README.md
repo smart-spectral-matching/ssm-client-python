@@ -18,7 +18,7 @@ Pre-requisite steps:
     cd ../
     pip install .
     cd bin
-    pip install openpyxl
+    pip install openpyxl==3
     ```
   3) Download the CURIES directory from [SSM OneDrive](https://ornl-my.sharepoint.com/personal/o9s_ornl_gov/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fo9s%5Fornl%5Fgov%2FDocuments%2FLDRD%2FSmart%5FSpectral%5FMatching%2FSSM%5FLDRD%5FShared&FolderCTID=0x012000FFFEF3294CD90D419E96367FC98F9ED5) and put it next to this `upload.py` file
   4) Modify the `__main__` section for API hostname, directories to upload, etc.
