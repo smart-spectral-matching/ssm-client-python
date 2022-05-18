@@ -237,9 +237,12 @@ def get_scidata(
         index=3
     )
     facets = scidata_dict["@graph"]["scidata"]["system"]["facets"]
-    facets.append(square)
-    facets.append(pentagonal)
-    facets.append(hexagonal)
+    if square:
+        facets.append(square)
+    if pentagonal:
+        facets.append(pentagonal)
+    if hexagonal:
+        facets.append(hexagonal)
     scidata_dict["@graph"]["scidata"]["system"]["facets"] = facets
 
     return scidata_dict
