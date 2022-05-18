@@ -5,7 +5,7 @@ import ssm_rest_python_client as ssm
 from typing import List
 
 
-def get_worksheet_data(
+def _get_worksheet_data(
     worksheet: Worksheet,
     key_name: str = None,
 ) -> dict:
@@ -24,7 +24,7 @@ def get_worksheet_data(
     return data_dict
 
 
-def get_filenames_to_remove(file_summary_dict: dict) -> List[str]:
+def _get_filenames_to_remove(file_summary_dict: dict) -> List[str]:
     remove_list = []
     for k, v in file_summary_dict.items():
         if not v["File Type"]:
@@ -38,7 +38,7 @@ def get_filenames_to_remove(file_summary_dict: dict) -> List[str]:
     return remove_list
 
 
-def get_mineral_data_worksheet(curies: str, workbook: str) -> Worksheet:
+def _get_mineral_data_worksheet(curies: str, workbook: str) -> Worksheet:
     '''
     Get the mineral data workbook
     '''
@@ -49,7 +49,7 @@ def get_mineral_data_worksheet(curies: str, workbook: str) -> Worksheet:
     return mineral_data_worksheet
 
 
-def get_functional_group_list(curies: str, workbook: str) -> list:
+def _get_functional_group_list(curies: str, workbook: str) -> list:
     '''
     Pull out the functional group list from the workbook
     '''
@@ -58,7 +58,7 @@ def get_functional_group_list(curies: str, workbook: str) -> list:
     last_functional_group_label = "Th"
 
     # Get "Mineral Data" worksheet and functional group labels from worksheet
-    ws = get_mineral_data_worksheet(curies, workbook)
+    ws = _get_mineral_data_worksheet(curies, workbook)
     labels = list(ws.values)[0]
 
     # Get functional group list
@@ -69,11 +69,57 @@ def get_functional_group_list(curies: str, workbook: str) -> list:
     return functional_group_list
 
 
-def get_file_summary_dict(
-    curies: str,
-    groups: List[str],
-    workbook: str
+def _get_formula_dict(file_summary_dict, location):
+    formula = file_summary_dict[location]["Formula"]
+    mineral_name = file_summary_dict[location]["Mineral Name"]
+    formula_dict = {
+        "@id": "compound/1/",
+        "@type": "sdo:compound",
+        "formula": formula,
+        "name": mineral_name,
+    }
+    return formula_dict
+
+
+def _get_structure_type_dict(file_summary_dict, location):
+    structure_type = file_summary_dict[location]["Structure type"]
+    structure_type_dict = {
+        "@id": "structuretype/1/",
+        "@type": "sdo:value",
+        "structure type": structure_type,
+    }
+    return structure_type_dict
+
+
+def _get_crystal_system_dict(file_summary_dict, location):
+    crystal_system = file_summary_dict[location]["Crystal System"]
+    crystal_system_dict = {
+        "@id": "crystalsystem/1/",
+        "@type": "sdo:value",
+        "crystal system": crystal_system,
+    }
+    return crystal_system_dict
+
+
+def _get_uranium_coordination_chemistry(
+    file_summary_dict: dict,
+    location: str,
+    coordination_type: str,
+    index: int = 1,
 ) -> dict:
+    coordination_dict = {}
+    coordination = file_summary_dict[location][coordination_type]
+    if coordination > 0:
+        coordination_dict = {
+            "@id": f'coordinationchemistry/{index}/',
+            "@type": "sdo:value",
+            "uranium coordination chemistry": coordination_type,
+            "multiplicity": coordination,
+        }
+    return coordination_dict
+
+
+def get_file_summary_dict(curies: str, workbook: str) -> dict:
     '''
     Get the file summary dict for metadata from the workbook for all of CURIES
     '''
@@ -84,15 +130,15 @@ def get_file_summary_dict(
     wb = openpyxl.load_workbook(filename=wb_path, read_only=True)
 
     # Get the dict for the files summary worksheet
-    file_summary_dict = get_worksheet_data(wb['Files Summary'], key_name=None)
+    file_summary_dict = _get_worksheet_data(wb['Files Summary'], key_name=None)
 
     # Get the dict for the mineral data worksheet + list of functional groups
-    mineral_data_dict = get_worksheet_data(
+    mineral_data_dict = _get_worksheet_data(
         wb['Mineral Data'],
         key_name='Mineral Name')
 
     # Filter out non-spectra data from file summary
-    remove_list = get_filenames_to_remove(file_summary_dict)
+    remove_list = _get_filenames_to_remove(file_summary_dict)
     for remove_key in remove_list:
         file_summary_dict.pop(remove_key)
 
@@ -106,38 +152,6 @@ def get_file_summary_dict(
     file_summary_dict = new_dict
 
     return file_summary_dict
-
-
-def get_formula_dict(file_summary_dict, location):
-    formula = file_summary_dict[location]["Formula"]
-    mineral_name = file_summary_dict[location]["Mineral Name"]
-    formula_dict = {
-        "@id": "compound/1/",
-        "@type": "sdo:compound",
-        "formula": formula,
-        "name": mineral_name,
-    }
-    return formula_dict
-
-
-def get_structure_type_dict(file_summary_dict, location):
-    structure_type = file_summary_dict[location]["Structure type"]
-    structure_type_dict = {
-        "@id": "structuretype/1/",
-        "@type": "sdo:value",
-        "structure type": structure_type,
-    }
-    return structure_type_dict
-
-
-def get_crystal_system_dict(file_summary_dict, location):
-    crystal_system = file_summary_dict[location]["Crystal System"]
-    crystal_system_dict = {
-        "@id": "crystalsystem/1/",
-        "@type": "sdo:value",
-        "crystal system": crystal_system,
-    }
-    return crystal_system_dict
 
 
 def get_scidata(
@@ -168,13 +182,13 @@ def get_scidata(
     )
 
     # Add formula to SciData
-    formula_dict = get_formula_dict(file_summary_dict, location)
+    formula_dict = _get_formula_dict(file_summary_dict, location)
     facets = scidata_dict["@graph"]["scidata"]["system"]["facets"]
     facets.append(formula_dict)
     scidata_dict["@graph"]["scidata"]["system"]["facets"] = facets
 
     # Add functional groups to SciData
-    functional_group_list = get_functional_group_list(curies, workbook)
+    functional_group_list = _get_functional_group_list(curies, workbook)
     facets = scidata_dict["@graph"]["scidata"]["system"]["facets"]
     functional_groups = {}
     for fgroup in functional_group_list:
@@ -192,15 +206,40 @@ def get_scidata(
     scidata_dict["@graph"]["scidata"]["system"]["facets"] = facets
 
     # Add structure type
-    structure_type_dict = get_structure_type_dict(file_summary_dict, location)
+    structure_type_dict = _get_structure_type_dict(file_summary_dict, location)
     facets = scidata_dict["@graph"]["scidata"]["system"]["facets"]
     facets.append(structure_type_dict)
     scidata_dict["@graph"]["scidata"]["system"]["facets"] = facets
 
     # Add crystal system
-    crystal_system_dict = get_crystal_system_dict(file_summary_dict, location)
+    crystal_system_dict = _get_crystal_system_dict(file_summary_dict, location)
     facets = scidata_dict["@graph"]["scidata"]["system"]["facets"]
     facets.append(crystal_system_dict)
+    scidata_dict["@graph"]["scidata"]["system"]["facets"] = facets
+
+    # Add square coordination chemistry
+    square = _get_uranium_coordination_chemistry(
+        file_summary_dict,
+        location,
+        coordination_type="square",
+        index=1
+    )
+    pentagonal = _get_uranium_coordination_chemistry(
+        file_summary_dict,
+        location,
+        coordination_type="pentagonal",
+        index=2
+    )
+    hexagonal = _get_uranium_coordination_chemistry(
+        file_summary_dict,
+        location,
+        coordination_type="hexagonal",
+        index=3
+    )
+    facets = scidata_dict["@graph"]["scidata"]["system"]["facets"]
+    facets.append(square)
+    facets.append(pentagonal)
+    facets.append(hexagonal)
     scidata_dict["@graph"]["scidata"]["system"]["facets"] = facets
 
     return scidata_dict
