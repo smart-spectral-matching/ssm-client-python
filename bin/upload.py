@@ -72,11 +72,7 @@ def upload_directories(
         dataset = rester.dataset.create("curies")
 
     # Get file summary dict
-    file_summary_dict = metadata.get_file_summary_dict(
-        curies,
-        groups,
-        workbook
-    )
+    file_summary_dict = metadata.get_file_summary_dict(curies, workbook)
 
     # Loop over directories
     total_spectra = 0
