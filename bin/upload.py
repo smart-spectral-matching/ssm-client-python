@@ -223,5 +223,4 @@ if __name__ == "__main__":
         group_directories,
         hostname,
         workbook,
-        limit_spectra=4,
         blacklist=blacklist)
