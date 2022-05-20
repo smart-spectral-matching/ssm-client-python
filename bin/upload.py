@@ -128,7 +128,6 @@ if __name__ == "__main__":
         "Vanadates",
         # "U Oxides",
     ]
-    group_directories = ["Arsenates"]
     workbook = "Master.xlsx"
 
     # Select hostnames
