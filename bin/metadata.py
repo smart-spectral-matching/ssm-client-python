@@ -138,7 +138,7 @@ def _get_uranium_coordination_chemistry(
     '''
     coordination_dict = {}
     coordination = file_summary_dict[location][coordination_type]
-    if coordination > 0:
+    if coordination:
         coordination_dict = {
             "@id": f'coordinationchemistry/{index}/',
             "@type": "sdo:value",
