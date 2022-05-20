@@ -1,6 +1,7 @@
 import openpyxl
 from openpyxl.worksheet.worksheet import Worksheet
 import pathlib
+import re
 import ssm_rest_python_client as ssm
 from typing import List
 
@@ -9,6 +10,9 @@ def _get_worksheet_data(
     worksheet: Worksheet,
     key_name: str = None,
 ) -> dict:
+    '''
+    Utility to function to pull out data from worksheet into dict
+    '''
     data = list(worksheet.values)
     labels = data[0]
     entries = data[1:]
@@ -25,6 +29,13 @@ def _get_worksheet_data(
 
 
 def _get_filenames_to_remove(file_summary_dict: dict) -> List[str]:
+    '''
+    Get list of files to remove.
+
+    Currently removes:
+         - blank file types
+         - anything that is not Raman Spectroscopy
+    '''
     remove_list = []
     for k, v in file_summary_dict.items():
         if not v["File Type"]:
@@ -38,18 +49,10 @@ def _get_filenames_to_remove(file_summary_dict: dict) -> List[str]:
     return remove_list
 
 
-def _get_mineral_data_worksheet(curies: str, workbook: str) -> Worksheet:
-    '''
-    Get the mineral data workbook
-    '''
-    curies_path = pathlib.Path(curies)
-    wb_path = curies_path / workbook
-    wb = openpyxl.load_workbook(filename=wb_path, read_only=True)
-    mineral_data_worksheet = wb['Mineral Data']
-    return mineral_data_worksheet
-
-
-def _get_functional_group_list(curies: str, workbook: str) -> list:
+def _get_functional_group_list(
+    curies: str,
+    workbook: str
+) -> list:
     '''
     Pull out the functional group list from the workbook
     '''
@@ -58,8 +61,12 @@ def _get_functional_group_list(curies: str, workbook: str) -> list:
     last_functional_group_label = "Th"
 
     # Get "Mineral Data" worksheet and functional group labels from worksheet
-    ws = _get_mineral_data_worksheet(curies, workbook)
+    curies_path = pathlib.Path(curies)
+    wb_path = curies_path / workbook
+    wb = openpyxl.load_workbook(filename=wb_path, read_only=True)
+    ws = wb['Mineral Data']
     labels = list(ws.values)[0]
+    wb.close()
 
     # Get functional group list
     start = labels.index(first_functional_group_label)
@@ -69,7 +76,13 @@ def _get_functional_group_list(curies: str, workbook: str) -> list:
     return functional_group_list
 
 
-def _get_formula_dict(file_summary_dict, location):
+def _get_formula_dict(
+    file_summary_dict: dict,
+    location: str
+) -> dict:
+    '''
+    Pull out the chemical formula from the workbook
+    '''
     formula = file_summary_dict[location]["Formula"]
     mineral_name = file_summary_dict[location]["Mineral Name"]
     formula_dict = {
@@ -81,7 +94,13 @@ def _get_formula_dict(file_summary_dict, location):
     return formula_dict
 
 
-def _get_structure_type_dict(file_summary_dict, location):
+def _get_structure_type_dict(
+    file_summary_dict: dict,
+    location: str
+) -> dict:
+    '''
+    Pull out the structure type from the workbook
+    '''
     structure_type = file_summary_dict[location]["Structure type"]
     structure_type_dict = {
         "@id": "structuretype/1/",
@@ -91,7 +110,13 @@ def _get_structure_type_dict(file_summary_dict, location):
     return structure_type_dict
 
 
-def _get_crystal_system_dict(file_summary_dict, location):
+def _get_crystal_system_dict(
+    file_summary_dict: dict,
+    location: str
+) -> dict:
+    '''
+    Pull out the crystal system from the workbook
+    '''
     crystal_system = file_summary_dict[location]["Crystal System"]
     crystal_system_dict = {
         "@id": "crystalsystem/1/",
@@ -107,6 +132,10 @@ def _get_uranium_coordination_chemistry(
     coordination_type: str,
     index: int = 1,
 ) -> dict:
+    '''
+    Pull out the uranium coordination chemistry from the workbook,
+    specified by the `coordination_type` argument
+    '''
     coordination_dict = {}
     coordination = file_summary_dict[location][coordination_type]
     if coordination > 0:
@@ -117,6 +146,46 @@ def _get_uranium_coordination_chemistry(
             "multiplicity": coordination,
         }
     return coordination_dict
+
+
+def _extract_raman_wavelength(file_type: str) -> int:
+    wavelength_regex = '.*Raman.*\((\d+) wavelength\)'
+    result = re.match(wavelength_regex, file_type)
+    wavelength = int(result.group(1))
+    return wavelength
+
+
+def _get_wavelength(
+    file_summary_dict: dict,
+    location: str,
+) -> dict:
+    '''
+    Pull out the wavelength from the workbook
+    '''
+    file_type = file_summary_dict[location]["File Type"]
+    wavelength = _extract_raman_wavelength(file_type)
+    wavelength_dict = {
+        "@id": "measurement/1/",
+        "@type": "sdo:measurement",
+        "techniqueType": "cao:spectroscopy",
+        "technique": "Raman Spectroscopy",
+        "instrumentType": "Raman Spectrometer",
+        "settings": [
+            {
+                "@id": "setting/1/",
+                "@type": "sdo:setting",
+                "quantity": "length",
+                "property": "Wavelength",
+                "value": {
+                    "@id": "setting/1/value/",
+                    "@type": "sdo:value",
+                    "number": str(wavelength),
+                    "unitref": "qudt:NanoM"
+                }
+            }
+        ]
+    }
+    return wavelength_dict
 
 
 def get_file_summary_dict(curies: str, workbook: str) -> dict:
@@ -151,6 +220,9 @@ def get_file_summary_dict(curies: str, workbook: str) -> dict:
         new_dict[filename].update(mineral_data)
     file_summary_dict = new_dict
 
+    # Close workbook
+    wb.close()
+
     return file_summary_dict
 
 
@@ -160,6 +232,10 @@ def get_scidata(
     curies: str,
     workbook: str
 ) -> dict:
+    '''
+    Get the SciData representation of a given file (`location`)
+    and its metadata held in the Workbook (`curies` + `workbook`)
+    '''
     # Get SciData dictionary from file
     scidata_dict = ssm.io.read(location.absolute(), ioformat="rruff")
 
@@ -244,5 +320,9 @@ def get_scidata(
     if hexagonal:
         facets.append(hexagonal)
     scidata_dict["@graph"]["scidata"]["system"]["facets"] = facets
+
+    # Add wavelength
+    wavelength_dict = _get_wavelength(file_summary_dict, location)
+    scidata_dict["@graph"]["scidata"]["methodology"]["aspects"] = [wavelength_dict]
 
     return scidata_dict
