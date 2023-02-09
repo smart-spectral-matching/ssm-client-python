@@ -2,10 +2,16 @@
 
 __author__ = """Marshall McDonnell"""
 __email__ = 'mcdonnellmt@ornl.gov'
-__version__ = '0.4.0'
 
+from importlib import metadata
 from .ssm_rester import SSMRester
 from . import io
+
+try:
+    __version__ = metadata.version(__package__)
+except metadata.PackageNotFoundError:
+    __version__ = toml.load("pyproject.toml")["tool"]["poetry"]["version"] + "dev"
+
 
 __all__ = [
     "SSMRester",
