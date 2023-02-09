@@ -6,4 +6,4 @@ WORKDIR $APP
 
 COPY . $APP
 
-RUN pipenv install --dev
+RUN poetry install

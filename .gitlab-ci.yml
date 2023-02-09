@@ -1,6 +1,6 @@
 stages:
     - build
-    - deploy
+    - package
 
 variables:
     GIT_STRATEGY: clone
@@ -69,16 +69,12 @@ test-all:
         - master
         - tags
 
-upload-package:
-    stage: deploy
+publish-package:
+    stage: package
     script:
-        - func_rse_docker_cleanup
-        - docker login --username=$CI_REGISTRY_USER --password=$CI_REGISTRY_PASSWORD $CI_REGISTRY
-        - docker pull ${PYTHON_IMAGE}
-        - docker run -v $(pwd):/app -w /app  ${PYTHON_IMAGE} bash -c "pip install pipenv && pipenv install --dev && pipenv run make dist && TWINE_PASSWORD=${DEPLOY_TOKEN} TWINE_USERNAME=${DEPLOY_TOKEN_USERNAME} PROJECT_URL=https://code.ornl.gov/api/v4/projects/${CI_PROJECT_ID}/packages/pypi pipenv run make release-use-url"
-        - sudo chown -R gitlab-runner .
-        - func_rse_docker_cleanup
+      - docker login --username=$CI_REGISTRY_USER --password=$CI_REGISTRY_PASSWORD $CI_REGISTRY
+      - docker run --rm $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:$CI_COMMIT_SHORT_SHA bash .ci/publish-package.sh gitlab-ci-token $CI_JOB_TOKEN
     tags:
         - rse-multi-builder
     only:
-        - tags
+        - /^v\d+\.\d+\.\d+.*$/
