@@ -6,28 +6,29 @@ variables:
     GIT_STRATEGY: clone
     PYTHON_IMAGE: "code.ornl.gov:4567/rse/datastreams/ssm/clients/ssm-rest-python-client/python:3.6"
 
-include:
-     remote: "https://code.ornl.gov/rse-deployment/rse-sharables/-/raw/master/.gitlab-ci-before_script.yml"
+before_script:
+  - curl https://code.ornl.gov/rse-deployment/rse-sharables/raw/master/rse-bash-modules.sh -O
+  - source rse-bash-modules.sh
+  - func_rse_docker_cleanup
+  - docker login --username=$CI_REGISTRY_USER --password=$CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+after_script:
+  - source rse-bash-modules.sh
+  - func_rse_docker_cleanup
 
 lint:
     stage: build
     script:
-        - func_rse_docker_cleanup
-        - docker login --username=$CI_REGISTRY_USER --password=$CI_REGISTRY_PASSWORD $CI_REGISTRY
         - docker build -f .ci/Dockerfile -t ssm-rest-python-client-lint .
-        - docker run ssm-rest-python-client-lint poetry run make lint
-        - func_rse_docker_cleanup
+        - docker --rm run ssm-rest-python-client-lint poetry run make lint
     tags:
         - rse-multi-builder
 
 lint-complexity:
     stage: build
     script:
-        - func_rse_docker_cleanup
-        - docker login --username=$CI_REGISTRY_USER --password=$CI_REGISTRY_PASSWORD $CI_REGISTRY
         - docker build -f .ci/Dockerfile -t ssm-rest-python-client-lint .
-        - docker run ssm-rest-python-client-lint poetry run make lint-complexity
-        - func_rse_docker_cleanup
+        - docker --rm run ssm-rest-python-client-lint poetry run make lint-complexity
     tags:
         - rse-multi-builder
     allow_failure: true
@@ -35,33 +36,24 @@ lint-complexity:
 test:
     stage: build
     script:
-        - func_rse_docker_cleanup
-        - docker login --username=$CI_REGISTRY_USER --password=$CI_REGISTRY_PASSWORD $CI_REGISTRY
         - docker build -f .ci/Dockerfile -t ssm-rest-python-client-test .
-        - docker run ssm-rest-python-client-test poetry run make test
-        - func_rse_docker_cleanup
+        - docker --rm run ssm-rest-python-client-test poetry run make test
     tags:
         - rse-multi-builder
 
 coverage:
     stage: build
     script:
-        - func_rse_docker_cleanup
-        - docker login --username=$CI_REGISTRY_USER --password=$CI_REGISTRY_PASSWORD $CI_REGISTRY
         - docker build -f .ci/Dockerfile -t ssm-rest-python-client-coverage .
-        - docker run ssm-rest-python-client-coverage poetry run make coverage
-        - func_rse_docker_cleanup
+        - docker run --rm ssm-rest-python-client-coverage poetry run make coverage
     tags:
         - rse-multi-builder
 
 test-all:
     stage: build
     script:
-        - func_rse_docker_cleanup
-        - docker login --username=$CI_REGISTRY_USER --password=$CI_REGISTRY_PASSWORD $CI_REGISTRY
         - docker build -f .ci/Dockerfile -t ssm-rest-python-client-test-all .
-        - docker run ssm-rest-python-client-test-all poetry run make test-all
-        - func_rse_docker_cleanup
+        - docker run --rm ssm-rest-python-client-test-all poetry run make test-all
     tags:
         - rse-multi-builder
     only:
@@ -72,8 +64,8 @@ test-all:
 publish-package:
     stage: package
     script:
-      - docker login --username=$CI_REGISTRY_USER --password=$CI_REGISTRY_PASSWORD $CI_REGISTRY
-      - docker run --rm $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:$CI_COMMIT_SHORT_SHA bash .ci/publish-package.sh gitlab-ci-token $CI_JOB_TOKEN
+      - docker build -f .ci/Dockerfile -t ssm-rest-python-publish .
+      - docker run --rm ssm-rest-python-publish bash .ci/publish-package.sh gitlab-ci-token $CI_JOB_TOKEN
     tags:
         - rse-multi-builder
     only:
