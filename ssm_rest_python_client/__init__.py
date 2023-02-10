@@ -4,6 +4,9 @@ __author__ = """Marshall McDonnell"""
 __email__ = 'mcdonnellmt@ornl.gov'
 
 from importlib import metadata
+import toml
+
+
 from .ssm_rester import SSMRester
 from . import io
 
