@@ -65,10 +65,10 @@ Ready to contribute? Here's how to set up `ssm_rest_python_client` for local dev
     $ git clone git@code.ornl.gov:your_name_here/ssm_rest_python_client.git
     $ cd ssm_rest_python_client/
 
-3. Install your local copy into a virtualenv. Assuming you have [pipenv]() installed, this is how you set up your fork for local development::
+3. Install your local copy into a virtualenv. Assuming you have [poetry](https://python-poetry.org/) installed, this is how you set up your fork for local development::
 
-    $ pipenv install
-    $ pipenv shell or pipenv run <cmd> for a single command
+    $ poetry install
+    $ poetry shell or poetry run <cmd> for a single command
 
 4. Create a branch for local development::
 
@@ -79,9 +79,9 @@ Ready to contribute? Here's how to set up `ssm_rest_python_client` for local dev
 5. When you're done making changes, check that your changes pass flake8 and the
    tests, including testing other Python versions with tox::
 
-    $ pipenv run make lint
-    $ pipenv run make test
-    $ pipenv run make test-all
+    $ poetry run make lint
+    $ poetry run make test
+    $ poetry run make test-all
 
    To get flake8 and tox, just pip install them into your virtualenv.
 

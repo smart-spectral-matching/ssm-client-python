@@ -131,14 +131,14 @@ rester.dataset.delete_by_uuid(dataset.uuid)
 
 # Development
 
-### Install via pipenv
+### Install via poetry
 
-Install via [pipenv](https://pipenv.pypa.io/en/latest/) with dev dependencies:
+Install via [poetry](https://python-poetry.org/) with dev dependencies:
 ```
-pipenv install --dev
+poetry install
 ```
 
-Then, run commands via `pipenv`:
+Then, run commands via `poetry`:
 ```
 poetry run python -c "import ssm_rest_python_client"
 ```
@@ -148,20 +148,20 @@ poetry run python -c "import ssm_rest_python_client"
 #### Flake8 linting
 Run linting over the package with [flake8](https://flake8.pycqa.org/en/latest/) via:
 ```
-pipenv run flake8 ssm_rest_python_client/ tests/
+poetry run flake8 ssm_rest_python_client/ tests/
 ```
 
 #### Pytest testing
 Run tests using [pytest](https://docs.pytest.org/en/stable/):
 ```
-pipenv run pytest tests/
+poetry run pytest tests/
 ```
 
 #### Code coverage
 
 Get code coverage reporting using the [pytest-cov](https://pytest-cov.readthedocs.io/en/latest/) plugin:
 ```
-pipenv run pytest --cov=ssm_rest_python_client --cov-report=term-missing tests/
+poetry run pytest --cov=ssm_rest_python_client --cov-report=term-missing tests/
 ```
 
 # Contributing
