@@ -2,7 +2,7 @@
 
 USERNAME=$1
 TOKEN=$2
-PROJECT_ID=4557
+PROJECT_ID=8013
 
 poetry build
 poetry config repositories.code "https://code.ornl.gov/api/v4/projects/$PROJECT_ID/packages/pypi"
