@@ -3,7 +3,7 @@ import json
 import pathlib
 import pytest
 
-from ssm_rest_python_client import io
+from ssm_client import io
 from tests import TEST_DATA_DIR
 
 

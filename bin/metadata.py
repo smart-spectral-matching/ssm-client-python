@@ -2,7 +2,7 @@ import openpyxl
 from openpyxl.worksheet.worksheet import Worksheet
 import pathlib
 import re
-import ssm_rest_python_client as ssm
+import ssm_client as ssm
 from typing import List
 
 

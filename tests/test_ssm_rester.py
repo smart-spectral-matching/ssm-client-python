@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
-"""Tests for `ssm_rest_python_client` package."""
+"""Tests for `ssm_client` package."""
 
 import pytest
 import requests
 import requests_mock  # noqa: F401
 
-from ssm_rest_python_client import SSMRester
-from ssm_rest_python_client.containers import DatasetContainer
+from ssm_client import SSMRester
+from ssm_client.containers import DatasetContainer
 
 
 @pytest.fixture

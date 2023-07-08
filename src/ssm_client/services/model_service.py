@@ -1,7 +1,7 @@
 import requests
 import warnings
 
-from ssm_rest_python_client.containers import ModelContainer
+from ssm_client.containers import ModelContainer
 from .dataset_service import _DATASETS_ENDPOINT
 
 _MODELS_ENDPOINT = "models"

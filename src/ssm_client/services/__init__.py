@@ -1,4 +1,4 @@
-"""Services for ssm-rest-python-client."""
+"""Services for ssm-client."""
 
 from .dataset_service import DatasetService
 from .model_service import ModelService

@@ -1,4 +1,4 @@
-from ssm_rest_python_client.services import DatasetService, ModelService
+from ssm_client.services import DatasetService, ModelService
 
 
 class SSMRester:

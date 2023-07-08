@@ -15,7 +15,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/issues.
+Report bugs at https://github.com/smart-spectral-matching/ssm-client-python/issues.
 
 If you are reporting a bug, please include:
 
@@ -38,14 +38,14 @@ and "help wanted" is open to whoever wants to implement it.
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
-ssm-rest-python-client could always use more documentation, whether as part of the
-official ssm-rest-python-client docs, in docstrings, or even on the web in blog posts,
+ssm-client could always use more documentation, whether as part of the
+official ssm-client docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/issues.
+The best way to send feedback is to file an issue at https://github.com/smart-spectral-matching/ssm-client-python/issues.
 
 If you are proposing a feature:
 
@@ -57,13 +57,13 @@ If you are proposing a feature:
 Get Started!
 ------------
 
-Ready to contribute? Here's how to set up `ssm_rest_python_client` for local development.
+Ready to contribute? Here's how to set up `ssm_client` for local development.
 
-1. Fork the `ssm_rest_python_client` repo on [Code](https://code.ornl.gov).
+1. Fork the `ssm_client` repo on [GitHub](https://github.com).
 2. Clone your fork locally::
 
-    $ git clone git@code.ornl.gov:your_name_here/ssm_rest_python_client.git
-    $ cd ssm_rest_python_client/
+    $ git clone git@github.com:your_name_here/ssm_client.git
+    $ cd ssm_client/
 
 3. Install your local copy into a virtualenv. Assuming you have [poetry](https://python-poetry.org/) installed, this is how you set up your fork for local development::
 
@@ -110,7 +110,7 @@ Tips
 
 To run a subset of tests::
 
-$ pytest tests.test_ssm_rest_python_client
+$ pytest tests.test_ssm_client
 
 
 Deploying

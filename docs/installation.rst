@@ -8,13 +8,13 @@ Installation
 Stable release
 --------------
 
-To install ssm-rest-python-client, run this command in your terminal:
+To install ssm-client, run this command in your terminal:
 
 .. code-block:: console
 
-    $ pip install ssm_rest_python_client
+    $ pip install ssm_client
 
-This is the preferred method to install ssm-rest-python-client, as it will always install the most recent stable release.
+This is the preferred method to install ssm-client, as it will always install the most recent stable release.
 
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide
 you through the process.
@@ -26,13 +26,13 @@ you through the process.
 From sources
 ------------
 
-The sources for ssm-rest-python-client can be downloaded from the `Code repo`_.
+The sources for ssm-client can be downloaded from the `Code repo`_.
 
 You can clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client.git
+    $ git clone git@github.com:smart-spectral-matching/ssm-client-python.git.git
 
 Once you have a copy of the source, you can install it with:
 
@@ -41,4 +41,4 @@ Once you have a copy of the source, you can install it with:
     $ python setup.py install
 
 
-.. _Code repo: https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client.git
+.. _Code repo: https://github.com/smart-spectral-matching/ssm-client-python.git
