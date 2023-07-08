@@ -117,16 +117,16 @@ rester.dataset.delete_by_uuid(dataset.uuid)
 
 # Development
 
-### Install via poetry
+### Install via pdm
 
-Install via [poetry](https://python-poetry.org/) with dev dependencies:
+Install via [pdm](https://pdm.fming.dev/latest/) with dev dependencies:
 ```
-poetry install
+pdm install -G:all
 ```
 
-Then, run commands via `poetry`:
+Then, run commands via `pdm`:
 ```
-poetry run python -c "import ssm_client"
+pdm run python -c "import ssm_client"
 ```
 
 ### Tests / Linting
@@ -134,20 +134,20 @@ poetry run python -c "import ssm_client"
 #### Flake8 linting
 Run linting over the package with [flake8](https://flake8.pycqa.org/en/latest/) via:
 ```
-poetry run flake8 src/ssm_client/ tests/
+pdm run flake8 src/ssm_client/ tests/
 ```
 
 #### Pytest testing
 Run tests using [pytest](https://docs.pytest.org/en/stable/):
 ```
-poetry run pytest tests/
+pdm run pytest tests/
 ```
 
 #### Code coverage
 
 Get code coverage reporting using the [pytest-cov](https://pytest-cov.readthedocs.io/en/latest/) plugin:
 ```
-poetry run pytest --cov=src/ssm_client --cov-report=term-missing tests/
+pdm run pytest --cov=src/ssm_client --cov-report=term-missing tests/
 ```
 
 # Contributing
