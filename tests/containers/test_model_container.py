@@ -4,7 +4,7 @@
 import json
 import pytest
 
-from ssm_rest_python_client.containers import ModelContainer
+from ssm_client.containers import ModelContainer
 
 
 @pytest.fixture

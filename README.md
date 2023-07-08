@@ -1,36 +1,22 @@
-# Smart Spectal Matching BATS REST API Python Client Library 
+# Smart Spectal Matching Python Client Library 
 
-Smart Spectral Matching REST API Python Client
-
-| Branch  | Build | Coverage |
-|---------|-------|----------|
-| NEXT    | [![NEXT](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/badges/next/pipeline.svg)](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/pipelines/next/latest) | [![coverage report](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/badges/next/coverage.svg)](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/commits/next) |
-| PROD    | [![PROD](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/badges/main/pipeline.svg)](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/pipelines/main/latest) | [![coverage report](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/badges/main/coverage.svg)](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client/-/commits/main) |
+Smart Spectral Matching Python Client
 
 # Installation
 
 ### Using pip
-Currently, the PyPI packages are hosted
-via [GitLab's PyPIpackage registry](https://docs.gitlab.com/ee/user/packages/pypi_repository/)
-and are only available to members of this repository.
 
-To install via [pip](https://pip.pypa.io/en/stable/) from this project's package registry, you can issue the following:
-```
-python -m pip install --extra-index-url https://__token__:<personal access token>code.ornl.gov/api/v4/projects/8013/packages/pypi/simple ssm-rest-python-client
-```
-
-To get the `<personal access token>` for the command above,
-follow the [GitLab personal access token docs](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html).
+_coming soon..._
 
 ### Manually
 Clone the repository either via:
  - HTTP:
 ```
-git clone https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client.git
+git clone https://github.com/smart-spectral-matching/ssm-client-python.git
 ```
  - SSH:
 ```
-git clone git@code.ornl.gov:rse/datastreams/ssm/clients/ssm-rest-python-client.git
+git clone git@github.com:smart-spectral-matching/ssm-client-python.git
 ```
 
 Create a virtual environment and activate to install the package in the isolated environment:
@@ -62,8 +48,8 @@ rm -rf <name of env>
 # Usage
 After installation, you can use the two main components of this package for the
 following functions:
-* [`ssm_rest_python_client.io`](#io-module) - Spectroscopy file format translations
-* [`ssm_rest_python_client.SSMRester`](#ssmrester) - REST API client for data management
+* [`ssm_client.io`](#io-module) - Spectroscopy file format translations
+* [`ssm_client.SSMRester`](#ssmrester) - REST API client for data management
 
 Also, there are [Jupyter Notebooks](https://jupyter.org/)
 in the `tutorials/` directory to help get started
@@ -86,7 +72,7 @@ and writes them out in the specified spectroscopy file format.
 
 Example:
 ```python
-from ssm_rest_python_client.io import read, write
+from ssm_client.io import read, write
 
 # Read in from RRUFF, write out to JCAMP-DX
 scidata_dict = read("./tests/data/rruff/raman_studtite.rruff", ioformat="rruff")
@@ -117,7 +103,7 @@ Create-Read-Update-Delete (CRUD) tasks for datasets and models.
 Example:
 ```python
 import json
-from ssm_rest_python_client import SSMRester
+from ssm_client import SSMRester
 
 rester = SSMRester(hostname="http://ssm.ornl.gov")
 dataset = rester.dataset.create()
@@ -140,7 +126,7 @@ poetry install
 
 Then, run commands via `poetry`:
 ```
-poetry run python -c "import ssm_rest_python_client"
+poetry run python -c "import ssm_client"
 ```
 
 ### Tests / Linting
@@ -148,7 +134,7 @@ poetry run python -c "import ssm_rest_python_client"
 #### Flake8 linting
 Run linting over the package with [flake8](https://flake8.pycqa.org/en/latest/) via:
 ```
-poetry run flake8 ssm_rest_python_client/ tests/
+poetry run flake8 src/ssm_client/ tests/
 ```
 
 #### Pytest testing
@@ -161,7 +147,7 @@ poetry run pytest tests/
 
 Get code coverage reporting using the [pytest-cov](https://pytest-cov.readthedocs.io/en/latest/) plugin:
 ```
-poetry run pytest --cov=ssm_rest_python_client --cov-report=term-missing tests/
+poetry run pytest --cov=src/ssm_client --cov-report=term-missing tests/
 ```
 
 # Contributing
@@ -170,8 +156,9 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 Please make sure to update tests as appropriate.
 
 # Links
-* SSM REST Python Client Project GitLab Repository: [https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client](https://code.ornl.gov/rse/datastreams/ssm/clients/ssm-rest-python-client)
-* SSM REST API Project GitLab Repository: [https://code.ornl.gov/rse/datastreams/ssm/backend/ssm-bats-rest-api.git](https://code.ornl.gov/rse/datastreams/ssm/backend/ssm-bats-rest-api.git)
+* SSM Python Client Project GitHub Repository: [https://github.com/smart-spectral-matching/ssm-client-python](https://github.com/smart-spectral-matching/ssm-client-python)
+* SSM File Converter Service GitHub Repository: [https://github.com/smart-spectral-matching/ssm-service-file-converter](https://github.com/smart-spectral-matching/ssm-service-file-converter)
+* SSM Catalog Service GitHub Repository: [https://github.com/smart-spectral-matching/ssm-service-catalog](https://github.com/smart-spectral-matching/ssm-service-catalog)
 
 # Licensing
 [BSD 3-clause](https://choosealicense.com/licenses/bsd-3-clause/)

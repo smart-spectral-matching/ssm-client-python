@@ -1,45 +1,45 @@
-ssm\_rest\_python\_client.io package
+ssm\_client.io package
 ====================================
 
 Submodules
 ----------
 
-ssm\_rest\_python\_client.io.formats module
+ssm\_client.io.formats module
 -------------------------------------------
 
-.. automodule:: ssm_rest_python_client.io.formats
+.. automodule:: ssm_client.io.formats
    :members:
    :undoc-members:
    :show-inheritance:
 
-ssm\_rest\_python\_client.io.jcamp module
+ssm\_client.io.jcamp module
 -----------------------------------------
 
-.. automodule:: ssm_rest_python_client.io.jcamp
+.. automodule:: ssm_client.io.jcamp
    :members:
    :undoc-members:
    :show-inheritance:
 
-ssm\_rest\_python\_client.io.rruff module
+ssm\_client.io.rruff module
 -----------------------------------------
 
-.. automodule:: ssm_rest_python_client.io.rruff
+.. automodule:: ssm_client.io.rruff
    :members:
    :undoc-members:
    :show-inheritance:
 
-ssm\_rest\_python\_client.io.scidata module
+ssm\_client.io.scidata module
 -------------------------------------------
 
-.. automodule:: ssm_rest_python_client.io.scidata
+.. automodule:: ssm_client.io.scidata
    :members:
    :undoc-members:
    :show-inheritance:
 
-ssm\_rest\_python\_client.io.scidata\_jsonld module
+ssm\_client.io.scidata\_jsonld module
 ---------------------------------------------------
 
-.. automodule:: ssm_rest_python_client.io.scidata_jsonld
+.. automodule:: ssm_client.io.scidata_jsonld
    :members:
    :undoc-members:
    :show-inheritance:
@@ -47,7 +47,7 @@ ssm\_rest\_python\_client.io.scidata\_jsonld module
 Module contents
 ---------------
 
-.. automodule:: ssm_rest_python_client.io
+.. automodule:: ssm_client.io
    :members:
    :undoc-members:
    :show-inheritance:

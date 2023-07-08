@@ -1,6 +1,6 @@
 import requests
 
-from ssm_rest_python_client.containers import DatasetContainer
+from ssm_client.containers import DatasetContainer
 
 _DATASETS_ENDPOINT = "datasets"
 

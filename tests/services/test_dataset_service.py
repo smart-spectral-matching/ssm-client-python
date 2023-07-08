@@ -6,7 +6,7 @@ import pytest
 import requests
 import requests_mock  # noqa: F401
 
-from ssm_rest_python_client.services import DatasetService
+from ssm_client.services import DatasetService
 
 
 @pytest.fixture

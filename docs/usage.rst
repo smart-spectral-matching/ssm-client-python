@@ -2,6 +2,6 @@
 Usage
 =====
 
-To use ssm-rest-python-client in a project::
+To use ssm-client in a project::
 
-    import ssm_rest_python_client
+    import ssm_client

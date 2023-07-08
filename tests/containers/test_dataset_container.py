@@ -3,7 +3,7 @@
 """Tests for DatasetContainer."""
 import json
 
-from ssm_rest_python_client.containers import DatasetContainer
+from ssm_client.containers import DatasetContainer
 
 
 def test_construction_default():

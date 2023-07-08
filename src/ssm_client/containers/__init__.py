@@ -1,4 +1,4 @@
-"""Containers for ssm-rest-python-client."""
+"""Containers for ssm-client."""
 
 from .dataset_container import DatasetContainer
 from .model_container import ModelContainer

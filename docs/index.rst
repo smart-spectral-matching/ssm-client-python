@@ -1,4 +1,4 @@
-Welcome to ssm-rest-python-client's documentation!
+Welcome to ssm-client's documentation!
 ==================================================
 
 .. toctree::

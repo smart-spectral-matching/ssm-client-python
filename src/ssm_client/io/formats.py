@@ -1,7 +1,7 @@
 from importlib import import_module
 
 
-_MODULE_BASE = 'ssm_rest_python_client.io.'
+_MODULE_BASE = 'ssm_client.io.'
 
 
 class UnknownFileTypeError(Exception):
@@ -12,6 +12,7 @@ ioformats = {
     'jcamp': 'jcamp',
     'rruff': 'rruff',
     'scidata-jsonld': 'scidata_jsonld',
+    'ssm-json': 'ssm_json',
 }
 
 

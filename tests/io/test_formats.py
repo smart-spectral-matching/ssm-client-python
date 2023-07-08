@@ -1,16 +1,16 @@
 """Tests for io.formats"""
 import pytest
-from ssm_rest_python_client import io
+from ssm_client import io
 
 
 def test_get_ioformat_scidata_jsonld():
     fmt = io.formats._get_ioformat('scidata-jsonld')
-    assert fmt.__name__ == 'ssm_rest_python_client.io.scidata_jsonld'
+    assert fmt.__name__ == 'ssm_client.io.scidata_jsonld'
 
 
 def test_get_ioformat_jcamp():
     fmt = io.formats._get_ioformat('jcamp')
-    assert fmt.__name__ == 'ssm_rest_python_client.io.jcamp'
+    assert fmt.__name__ == 'ssm_client.io.jcamp'
 
 
 def test_get_ioformat_raise_exception():

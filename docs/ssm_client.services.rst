@@ -1,21 +1,21 @@
-ssm\_rest\_python\_client.services package
+ssm\_client.services package
 ==========================================
 
 Submodules
 ----------
 
-ssm\_rest\_python\_client.services.dataset\_service module
+ssm\_client.services.dataset\_service module
 ----------------------------------------------------------
 
-.. automodule:: ssm_rest_python_client.services.dataset_service
+.. automodule:: ssm_client.services.dataset_service
    :members:
    :undoc-members:
    :show-inheritance:
 
-ssm\_rest\_python\_client.services.model\_service module
+ssm\_client.services.model\_service module
 --------------------------------------------------------
 
-.. automodule:: ssm_rest_python_client.services.model_service
+.. automodule:: ssm_client.services.model_service
    :members:
    :undoc-members:
    :show-inheritance:
@@ -23,7 +23,7 @@ ssm\_rest\_python\_client.services.model\_service module
 Module contents
 ---------------
 
-.. automodule:: ssm_rest_python_client.services
+.. automodule:: ssm_client.services
    :members:
    :undoc-members:
    :show-inheritance:

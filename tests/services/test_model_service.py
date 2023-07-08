@@ -6,9 +6,9 @@ import pytest
 import requests
 import requests_mock  # noqa: F401
 
-from ssm_rest_python_client.containers import DatasetContainer
-from ssm_rest_python_client.services import ModelService
-from ssm_rest_python_client.services.model_service import \
+from ssm_client.containers import DatasetContainer
+from ssm_client.services import ModelService
+from ssm_client.services.model_service import \
     MismatchedDatasetException
 
 

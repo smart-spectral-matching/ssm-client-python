@@ -1,5 +1,5 @@
 import pathlib
-import ssm_rest_python_client as ssm
+import ssm_client as ssm
 import time
 from typing import List
 import warnings
