@@ -65,10 +65,10 @@ Ready to contribute? Here's how to set up `ssm_client` for local development.
     $ git clone git@github.com:your_name_here/ssm_client.git
     $ cd ssm_client/
 
-3. Install your local copy into a virtualenv. Assuming you have [poetry](https://python-poetry.org/) installed, this is how you set up your fork for local development::
+3. Install your local copy into a virtualenv. Assuming you have [pdm](https://pdm.fming.dev/latest/) installed, this is how you set up your fork for local development::
 
-    $ poetry install
-    $ poetry shell or poetry run <cmd> for a single command
+    $ pdm install
+    $ pdm shell or pdm run <cmd> for a single command
 
 4. Create a branch for local development::
 
@@ -79,9 +79,9 @@ Ready to contribute? Here's how to set up `ssm_client` for local development.
 5. When you're done making changes, check that your changes pass flake8 and the
    tests, including testing other Python versions with tox::
 
-    $ poetry run make lint
-    $ poetry run make test
-    $ poetry run make test-all
+    $ pdm run make lint
+    $ pdm run make test
+    $ pdm run make test-all
 
    To get flake8 and tox, just pip install them into your virtualenv.
 
