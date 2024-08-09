@@ -1,10 +1,10 @@
 """Services for ssm-client."""
 
-from .dataset_service import DatasetService
+from .collection_service import CollectionService
 from .model_service import ModelService
 
 
 __all__ = [
-    "DatasetService",
+    "CollectionService",
     "ModelService",
 ]

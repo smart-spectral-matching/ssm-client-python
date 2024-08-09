@@ -6,7 +6,7 @@ import pytest
 import requests
 import requests_mock  # noqa: F401
 
-from ssm_client.containers import DatasetContainer
+from ssm_client.containers import CollectionContainer
 from ssm_client.services import ModelService
 from ssm_client.services.model_service import \
     MismatchedDatasetException
@@ -58,7 +58,7 @@ def model_uuid():
 def dataset():
     dataset_title = 64 * "X"
     uri = "http://localhost/{}".format(dataset_title)
-    return DatasetContainer(title=dataset_title, uri=uri)
+    return CollectionContainer(title=dataset_title, uri=uri)
 
 
 @pytest.fixture
