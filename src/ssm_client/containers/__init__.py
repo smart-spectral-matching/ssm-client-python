@@ -1,9 +1,9 @@
 """Containers for ssm-client."""
 
-from .dataset_container import DatasetContainer
+from .collection_container import CollectionContainer
 from .model_container import ModelContainer
 
 __all__ = [
-    "DatasetContainer",
+    "CollectionContainer",
     "ModelContainer",
 ]

@@ -6,12 +6,12 @@ import pytest
 import requests
 import requests_mock  # noqa: F401
 
-from ssm_client.services import DatasetService
+from ssm_client.services import CollectionService
 
 
 @pytest.fixture
 def dataset_service():
-    return DatasetService()
+    return CollectionService()
 
 
 def test_create(dataset_service, requests_mock):  # noqa: F811

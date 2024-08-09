@@ -1,20 +1,20 @@
 import json
 
 
-class DatasetContainer:
+class CollectionContainer:
     def __init__(self, **kwargs):
         self.__title = kwargs.get('title', None)
         self.__uri = kwargs.get('uri', None)
 
     def __eq__(self, other):
         """
-        Support "==" comparison between DatasetContainers
+        Support "==" comparison between CollectionContainers
 
         Args:
-            other (DatasetContainer): Dataset to compare for equality.
+            other (CollectionContainer): Collection to compare for equality.
 
         Return:
-            areDatasetsEqual (bool)
+            areCollectionsEqual (bool)
         """
         titleEqual = self.title == other.title
         uriEqual = self.uri == other.uri
@@ -22,13 +22,13 @@ class DatasetContainer:
 
     def __ne__(self, other):
         """
-        Support "!=" comparison between DatasetContainers
+        Support "!=" comparison between CollectionContainers
 
         Args:
-            other (DatasetContainer): Dataset to compare for non-equality.
+            other (CollectionContainer): Collection to compare for non-equality.
 
         Return:
-            areDatasetsNotEqual (bool)
+            areCollectionsNotEqual (bool)
         """
 
         titleNotEqual = self.title != other.title
@@ -36,26 +36,26 @@ class DatasetContainer:
         return titleNotEqual or uriNotEqual
 
     def __repr__(self):
-        dataset_dict = {
+        collection_dict = {
             "title": self.title,
             "uri": self.uri,
         }
-        return json.dumps(dataset_dict)
+        return json.dumps(collection_dict)
 
     def __str__(self):
-        fmt = "DatasetContainer(title={title},uri={uri})"
+        fmt = "CollectionContainer(title={title},uri={uri})"
         return fmt.format(title=self.title, uri=self.uri)
 
     @property
     def title(self):
         """
-        Title for DatasetContainer
+        Title for CollectionContainer
         """
         return self.__title
 
     @property
     def uri(self):
         """
-        Fuseki server URI / URL where DatasetContainer is stored
+        Fuseki server URI / URL where CollectionContainer is stored
         """
         return self.__uri
