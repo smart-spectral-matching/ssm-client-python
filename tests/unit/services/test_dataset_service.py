@@ -65,7 +65,9 @@ def test_construction(collection):
     assert dataset.hostname == "http://localhost"
     assert dataset.collection_title == collection.title
 
-    dataset = DatasetService(collection=collection, collection_title=collection.title)
+    dataset = DatasetService(
+        collection=collection, collection_title=collection.title
+    )
     assert dataset.hostname == "http://localhost"
     assert dataset.collection_title == collection.title
 

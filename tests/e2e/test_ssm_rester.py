@@ -24,7 +24,9 @@ def test_collection_read(ssm_rester):
     title = "foo"
 
     created_collection = ssm_rester.collection.create(title)
-    read_collection = ssm_rester.collection.get_by_title(created_collection.title)
+    read_collection = ssm_rester.collection.get_by_title(
+        created_collection.title
+    )
 
     assert created_collection == read_collection
 
@@ -34,7 +36,9 @@ def test_collection_delete(ssm_rester):
     title = "foo"
 
     created_collection = ssm_rester.collection.create(title)
-    read_collection = ssm_rester.collection.get_by_title(created_collection.title)
+    read_collection = ssm_rester.collection.get_by_title(
+        created_collection.title
+    )
 
     assert created_collection == read_collection
 
@@ -72,7 +76,9 @@ def test_metazeunerite_dataset_ssm_json_create(
     collection = ssm_rester.collection.create("foo-collection-ssm-json")
     ssm_rester.initialize_dataset_for_collection(collection)
     dataset = ssm_rester.dataset.create(metazeunerite_jsonld)
-    dataset_ssm_json = ssm_rester.dataset.get_by_uuid(dataset.uuid, format="json")
+    dataset_ssm_json = ssm_rester.dataset.get_by_uuid(
+        dataset.uuid, format="json"
+    )
     print(dataset.dataset.keys())
     assert dataset.dataset.get("@graph")[0].get(
         "title"
@@ -82,14 +88,18 @@ def test_metazeunerite_dataset_ssm_json_create(
     ) == metazeunerite_ssm_json.get("description")
 
 
-def test_metazeunerite_dataset_ssm_json_update(ssm_rester, metazeunerite_jsonld):
+def test_metazeunerite_dataset_ssm_json_update(
+    ssm_rester, metazeunerite_jsonld
+):
     # Create collection and upload metazeunerite scidata JSON-LD
     collection = ssm_rester.collection.create("foo-collection-ssm-json")
     ssm_rester.initialize_dataset_for_collection(collection)
     dataset = ssm_rester.dataset.create(metazeunerite_jsonld)
 
     # Pull down the metazeuneriate data from catalog in SSM JSON format
-    dataset_ssm_json = ssm_rester.dataset.get_by_uuid(dataset.uuid, format="json")
+    dataset_ssm_json = ssm_rester.dataset.get_by_uuid(
+        dataset.uuid, format="json"
+    )
 
     # Modify the 51st data entry for y-axis
     dataseries = dataset_ssm_json.dataset.get("scidata").get("dataseries")
@@ -107,7 +117,8 @@ def test_metazeunerite_dataset_ssm_json_update(ssm_rester, metazeunerite_jsonld)
     with open(ssm_json_filename, "w") as f:
         json.dump(dataset_ssm_json.dataset, f)
 
-    # Upload the modified metazeunerite SSM JSON file to converter for SciData JSON-LD format output
+    # Upload the modified metazeunerite SSM JSON file to converter
+    # for SciData JSON-LD format output
     with open(ssm_json_filename, "r") as f:
         file_args = {"upload_file": (ssm_json_filename, f)}
         response = requests.post(

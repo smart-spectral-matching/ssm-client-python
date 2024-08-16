@@ -30,8 +30,8 @@ def test_construction_default():
 def test_construction_just_uuid():
     """Test creating default dataset"""
     kwargs = {
-        "uuid": "5D0DC5589FA2C1F5DE2AB19B47F3923E65B261FABD8ED0F9A9B57CBBE3799988"
-    }  # noqa: E501
+        "uuid": "5D0DC5589FA2C1F5DE2AB19B47F3923E65B261FABD8ED0F9A9B57CBBE3799988"  # noqa: E501
+    }
     dataset = DatasetContainer(**kwargs)
     assert dataset.uuid == kwargs["uuid"]
     assert dataset.dataset == dict()
@@ -49,13 +49,18 @@ def test_dataset_str(dataset):
     """Testing string output of DatasetContainer"""
     dataset_container = DatasetContainer()
     target = "DatasetContainer(\nuuid={uuid},\ndataset={dataset}\n)"
-    assert target.format(uuid=None, dataset=dict()) == dataset_container.__str__()
+    assert (
+        target.format(uuid=None, dataset=dict()) == dataset_container.__str__()
+    )
 
     uuid = "foo"
     dataset_container = DatasetContainer(uuid=uuid, dataset=dataset)
-    pretty_dataset = json.dumps(dataset_container.dataset, sort_keys=True, indent=4)
+    pretty_dataset = json.dumps(
+        dataset_container.dataset, sort_keys=True, indent=4
+    )
     assert (
-        target.format(uuid=uuid, dataset=pretty_dataset) == dataset_container.__str__()
+        target.format(uuid=uuid, dataset=pretty_dataset)
+        == dataset_container.__str__()
     )
 
 

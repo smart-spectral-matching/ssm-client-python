@@ -32,7 +32,9 @@ def _remove_elements_from_list(
 # Tests
 
 
-@pytest.mark.skip("Broken test due to SciDataLib not handling jcamp 'children'")
+@pytest.mark.skip(
+    "Broken test due to SciDataLib not handling jcamp 'children'"
+)
 def test_read_hnmr(hnmr_ethanol_jcamp):
     scidata_dict = jcamp.read_jcamp(hnmr_ethanol_jcamp.resolve())
     assert scidata_dict == 0
@@ -87,7 +89,9 @@ def test_read_infrared(infrared_ethanol_jcamp):
 
 
 def test_read_infrared_compressed(infrared_ethanol_compressed_jcamp):
-    scidata_dict = jcamp.read_jcamp(infrared_ethanol_compressed_jcamp.resolve())
+    scidata_dict = jcamp.read_jcamp(
+        infrared_ethanol_compressed_jcamp.resolve()
+    )
 
     graph = scidata_dict.get("@graph")
     assert graph["title"] == "$$ Begin of the data block"
@@ -115,7 +119,9 @@ def test_read_infrared_compressed(infrared_ethanol_compressed_jcamp):
     assert len(parameter_0.get("dataarray")) == 1970
 
 
-@pytest.mark.skip("Broken test due to SciDataLib not handling jcamp 'children'")
+@pytest.mark.skip(
+    "Broken test due to SciDataLib not handling jcamp 'children'"
+)
 def test_read_infrared_compound(infrared_compound_jcamp):
     scidata_dict = jcamp.read_jcamp(infrared_compound_jcamp.resolve())
     assert scidata_dict == 0
@@ -221,7 +227,10 @@ def test_read_uvvis(uvvis_toluene_jcamp):
 
     graph = scidata_dict.get("@graph")
     assert graph["title"] == "Toluene"
-    assert graph["publisher"] == "INSTITUTE OF ENERGY PROBLEMS OF CHEMICAL PHYSICS, RAS"
+    assert (
+        graph["publisher"]
+        == "INSTITUTE OF ENERGY PROBLEMS OF CHEMICAL PHYSICS, RAS"
+    )
     description = graph.get("description")
     assert "JCAMP-DX" in description
 

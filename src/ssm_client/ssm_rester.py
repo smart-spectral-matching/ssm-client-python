@@ -19,7 +19,8 @@ class SSMRester:
         Initialize the Dataset service for collection
 
         Args:
-            collection (CollectionContainer): collection to setup a DatasetService for
+            collection (CollectionContainer): collection to setup
+                DatasetService for
         """
 
         self.dataset = DatasetService(
