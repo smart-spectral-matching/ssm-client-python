@@ -75,21 +75,25 @@ def test_metazeunerite_dataset_ssm_json_create(ssm_rester, metazeunerite_jsonld,
         
 
 def test_metazeunerite_dataset_ssm_json_update(ssm_rester, metazeunerite_jsonld):
+    # Create collection and upload metazeunerite scidata JSON-LD
     collection = ssm_rester.collection.create("foo-collection-ssm-json")
     ssm_rester.initialize_dataset_for_collection(collection)
     dataset = ssm_rester.dataset.create(metazeunerite_jsonld)
+
+    # Pull down the metazeuneriate data from catalog in SSM JSON format
     dataset_ssm_json = ssm_rester.dataset.get_by_uuid(dataset.uuid, format="json")
 
     # Modify the 51st data entry for y-axis
     dataseries = dataset_ssm_json.dataset.get("scidata").get("dataseries")
-    # x = 0, y = 1
     y = dataseries[1].get("y-axis").get("parameter").get("numericValueArray")[0].get("numberArray")
     y[50] -= 100.0
 
+    # Write out the modified SSM JSON metazeunerite data to file
     ssm_json_filename = "temporary.json"
     with open(ssm_json_filename, "w") as f:
         json.dump(dataset_ssm_json.dataset, f)
 
+    # Upload the modified metazeunerite SSM JSON file to converter for SciData JSON-LD format output
     with open(ssm_json_filename, "r") as f:
         file_args = {"upload_file": (ssm_json_filename, f)}
         response = requests.post("http://localhost:8000/convert/jsonld", files=file_args)
