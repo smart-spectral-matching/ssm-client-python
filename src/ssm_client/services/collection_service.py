@@ -25,9 +25,9 @@ class CollectionService:
         Returns:
             endpoint (str): Collection endpoint to use
         """
-        endpoint = f'{self.uri}/{_COLLECTION_ENDPOINT}'
+        endpoint = f"{self.uri}/{_COLLECTION_ENDPOINT}"
         if collection:
-            endpoint += f'/{collection}'
+            endpoint += f"/{collection}"
         return endpoint
 
     @property
@@ -35,7 +35,7 @@ class CollectionService:
         """
         URI property for CollectionContainer
         """
-        return f'{self.hostname}'
+        return f"{self.hostname}"
 
     def create(self, title: str) -> CollectionContainer:
         """
@@ -50,7 +50,7 @@ class CollectionService:
         response = requests.post(self._endpoint(), json=json)
         response.raise_for_status()
         return CollectionContainer(**response.json())
-    
+
     def get_collections(self) -> list[CollectionContainer]:
         response = requests.get(self._endpoint())
         response.raise_for_status()

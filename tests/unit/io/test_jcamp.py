@@ -2,12 +2,10 @@ import pytest
 from typing import List
 
 from ssm_client.io import jcamp
-from tests import TEST_DATA_DIR
 
 
 def _remove_elements_from_list(
-    old_list: List[str],
-    skip_elements: List[str]
+    old_list: List[str], skip_elements: List[str]
 ) -> List[str]:
     """
     Utility function for removing elements from a list
@@ -19,7 +17,7 @@ def _remove_elements_from_list(
     new_list = []
     for element in old_list:
         keep = True
-        element_list = [x.strip() for x in element.split(',')]
+        element_list = [x.strip() for x in element.split(",")]
         for key in skip_elements:
             for x in element_list:
                 if key in x:
@@ -33,17 +31,19 @@ def _remove_elements_from_list(
 
 # Tests
 
+
 @pytest.mark.skip("Broken test due to SciDataLib not handling jcamp 'children'")
 def test_read_hnmr(hnmr_ethanol_jcamp):
     scidata_dict = jcamp.read_jcamp(hnmr_ethanol_jcamp.resolve())
+    assert scidata_dict == 0
 
 
 def test_read_infrared(infrared_ethanol_jcamp):
     scidata_dict = jcamp.read_jcamp(infrared_ethanol_jcamp.resolve())
 
-    graph = scidata_dict.get('@graph')
-    assert graph['title'] == 'ETHANOL'
-    assert graph['publisher'] == 'DOW CHEMICAL COMPANY'
+    graph = scidata_dict.get("@graph")
+    assert graph["title"] == "ETHANOL"
+    assert graph["publisher"] == "DOW CHEMICAL COMPANY"
     description = graph.get("description")
     for jcamp_keyword in ["JCAMP-DX", "COBLENTZ"]:
         assert jcamp_keyword in description
@@ -83,22 +83,22 @@ def test_read_infrared(infrared_ethanol_jcamp):
     parameter_0 = dataseries_0.get("parameter")[0]
     assert len(parameter_0) == 9
     assert "dataarray" in parameter_0
-    assert len(parameter_0.get("dataarray")) == 3570 
+    assert len(parameter_0.get("dataarray")) == 3570
 
 
 def test_read_infrared_compressed(infrared_ethanol_compressed_jcamp):
     scidata_dict = jcamp.read_jcamp(infrared_ethanol_compressed_jcamp.resolve())
 
-    graph = scidata_dict.get('@graph')
-    assert graph['title'] == '$$ Begin of the data block'
+    graph = scidata_dict.get("@graph")
+    assert graph["title"] == "$$ Begin of the data block"
     description = graph.get("description")
     assert "JCAMP-DX" in description
 
     methodology = scidata_dict["@graph"]["scidata"]["methodology"]
-    assert len(methodology["aspects"]) == 0 
+    assert len(methodology["aspects"]) == 0
 
     system = scidata_dict["@graph"]["scidata"]["system"]
-    assert len(system["facets"]) == 0 
+    assert len(system["facets"]) == 0
 
     dataset = scidata_dict.get("@graph").get("scidata").get("dataset")
     assert len(dataset) == 5
@@ -112,31 +112,32 @@ def test_read_infrared_compressed(infrared_ethanol_compressed_jcamp):
     parameter_0 = dataseries_0.get("parameter")[0]
     assert len(parameter_0) == 9
     assert "dataarray" in parameter_0
-    assert len(parameter_0.get("dataarray")) == 1970 
+    assert len(parameter_0.get("dataarray")) == 1970
 
 
 @pytest.mark.skip("Broken test due to SciDataLib not handling jcamp 'children'")
 def test_read_infrared_compound(infrared_compound_jcamp):
     scidata_dict = jcamp.read_jcamp(infrared_compound_jcamp.resolve())
+    assert scidata_dict == 0
 
 
 def test_read_infrared_multiline(infrared_multiline_jcamp):
     scidata_dict = jcamp.read_jcamp(infrared_multiline_jcamp.resolve())
 
-    graph = scidata_dict.get('@graph')
-    assert graph['title'] == 'multiline datasets test'
-    assert graph['publisher'] == 'Origin test'
+    graph = scidata_dict.get("@graph")
+    assert graph["title"] == "multiline datasets test"
+    assert graph["publisher"] == "Origin test"
     description = graph.get("description")
     assert "JCAMP-DX" in description
 
     methodology = scidata_dict["@graph"]["scidata"]["methodology"]
-    assert len(methodology["aspects"]) == 2 
+    assert len(methodology["aspects"]) == 2
     aspects = methodology["aspects"]
-    assert len(aspects[0]["settings"]) == 1 
+    assert len(aspects[0]["settings"]) == 1
     assert aspects[0]["settings"][0]["value"]["number"] == 32.0
 
     system = scidata_dict["@graph"]["scidata"]["system"]
-    assert len(system["facets"]) == 0 
+    assert len(system["facets"]) == 0
 
     dataset = scidata_dict.get("@graph").get("scidata").get("dataset")
     assert len(dataset) == 5
@@ -150,25 +151,25 @@ def test_read_infrared_multiline(infrared_multiline_jcamp):
     parameter_0 = dataseries_0.get("parameter")[0]
     assert len(parameter_0) == 9
     assert "dataarray" in parameter_0
-    assert len(parameter_0.get("dataarray")) == 1919 
+    assert len(parameter_0.get("dataarray")) == 1919
 
 
 def test_read_mass(mass_ethanol_jcamp):
     scidata_dict = jcamp.read_jcamp(mass_ethanol_jcamp.resolve())
 
-    graph = scidata_dict.get('@graph')
-    assert graph['title'] == 'ethanol'
-    assert graph['publisher'] == 'Widener University'
+    graph = scidata_dict.get("@graph")
+    assert graph["title"] == "ethanol"
+    assert graph["publisher"] == "Widener University"
     description = graph.get("description")
     assert "JCAMP-DX" in description
 
     methodology = scidata_dict["@graph"]["scidata"]["methodology"]
-    assert len(methodology["aspects"]) == 1 
+    assert len(methodology["aspects"]) == 1
     aspects = methodology["aspects"]
     assert aspects[0]["instrument"] == "NIST Database"
 
     system = scidata_dict["@graph"]["scidata"]["system"]
-    assert len(system["facets"]) == 0 
+    assert len(system["facets"]) == 0
 
     dataset = scidata_dict.get("@graph").get("scidata").get("dataset")
     assert len(dataset) == 5
@@ -182,23 +183,23 @@ def test_read_mass(mass_ethanol_jcamp):
     parameter_0 = dataseries_0.get("parameter")[0]
     assert len(parameter_0) == 9
     assert "dataarray" in parameter_0
-    assert len(parameter_0.get("dataarray")) == 12 
+    assert len(parameter_0.get("dataarray")) == 12
 
 
 def test_read_neutron(neutron_emodine_jcamp):
     scidata_dict = jcamp.read_jcamp(neutron_emodine_jcamp.resolve())
 
-    graph = scidata_dict.get('@graph')
-    assert graph['title'] == "Emodine, C15H10O4"
-    assert graph['publisher'] == 'TFXA, ISIS'
+    graph = scidata_dict.get("@graph")
+    assert graph["title"] == "Emodine, C15H10O4"
+    assert graph["publisher"] == "TFXA, ISIS"
     description = graph.get("description")
     assert "JCAMP-DX" in description
 
     methodology = scidata_dict["@graph"]["scidata"]["methodology"]
-    assert len(methodology["aspects"]) == 1 
+    assert len(methodology["aspects"]) == 1
 
     system = scidata_dict["@graph"]["scidata"]["system"]
-    assert len(system["facets"]) == 0 
+    assert len(system["facets"]) == 0
 
     dataset = scidata_dict.get("@graph").get("scidata").get("dataset")
     assert len(dataset) == 5
@@ -212,20 +213,20 @@ def test_read_neutron(neutron_emodine_jcamp):
     parameter_0 = dataseries_0.get("parameter")[0]
     assert len(parameter_0) == 9
     assert "dataarray" in parameter_0
-    assert len(parameter_0.get("dataarray")) == 1992 
+    assert len(parameter_0.get("dataarray")) == 1992
 
 
 def test_read_uvvis(uvvis_toluene_jcamp):
     scidata_dict = jcamp.read_jcamp(uvvis_toluene_jcamp.resolve())
 
-    graph = scidata_dict.get('@graph')
-    assert graph['title'] == "Toluene"
-    assert graph['publisher'] == 'INSTITUTE OF ENERGY PROBLEMS OF CHEMICAL PHYSICS, RAS'
+    graph = scidata_dict.get("@graph")
+    assert graph["title"] == "Toluene"
+    assert graph["publisher"] == "INSTITUTE OF ENERGY PROBLEMS OF CHEMICAL PHYSICS, RAS"
     description = graph.get("description")
     assert "JCAMP-DX" in description
 
     methodology = scidata_dict["@graph"]["scidata"]["methodology"]
-    assert len(methodology["aspects"]) == 1 
+    assert len(methodology["aspects"]) == 1
 
     system = scidata_dict["@graph"]["scidata"]["system"]
     assert len(system["facets"]) == 1
@@ -242,15 +243,15 @@ def test_read_uvvis(uvvis_toluene_jcamp):
     parameter_0 = dataseries_0.get("parameter")[0]
     assert len(parameter_0) == 9
     assert "dataarray" in parameter_0
-    assert len(parameter_0.get("dataarray")) == 335 
+    assert len(parameter_0.get("dataarray")) == 335
 
 
 def test_read_raman(raman_tannic_acid_jcamp):
     scidata_dict = jcamp.read_jcamp(raman_tannic_acid_jcamp.resolve())
 
-    graph = scidata_dict.get('@graph')
-    assert graph['title'] == 'tannic acid'
-    assert graph['publisher'] == 'Ocean Optics R2000'
+    graph = scidata_dict.get("@graph")
+    assert graph["title"] == "tannic acid"
+    assert graph["publisher"] == "Ocean Optics R2000"
 
     methodology = scidata_dict["@graph"]["scidata"]["methodology"]
     assert len(methodology["aspects"]) == 1
@@ -272,7 +273,7 @@ def test_read_raman(raman_tannic_acid_jcamp):
     parameter_0 = dataseries_0.get("parameter")[0]
     assert len(parameter_0) == 9
     assert "dataarray" in parameter_0
-    assert len(parameter_0.get("dataarray")) == 1949 
+    assert len(parameter_0.get("dataarray")) == 1949
 
 
 def test_write_raman(tmp_path, raman_tannic_acid_jcamp):
@@ -293,6 +294,6 @@ def test_write_raman(tmp_path, raman_tannic_acid_jcamp):
     target = _remove_elements_from_list(target, skip_keys)
 
     for result_element, target_element in zip(result, target):
-        result_list = [x.strip() for x in result_element.split(',')]
-        target_list = [x.strip() for x in target_element.split(',')]
+        result_list = [x.strip() for x in result_element.split(",")]
+        target_list = [x.strip() for x in target_element.split(",")]
         assert result_list == target_list

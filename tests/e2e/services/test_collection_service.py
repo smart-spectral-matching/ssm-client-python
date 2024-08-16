@@ -5,14 +5,10 @@
 import pytest
 import requests
 
-from ssm_client.services import CollectionService
-
-
-
 
 def test_create(collection_service):
     """Test creating collection"""
-    title = 64*"X"
+    title = 64 * "X"
 
     collection = collection_service.create(title)
     assert len(collection.title) == 64
@@ -31,8 +27,6 @@ def test_read(collection_service):
 def test_delete(collection_service):  # noqa: F811
     """Test deleting collection"""
     title = "foo"
-    uri = "bar"
-    json = {'title': title, 'uri': uri}
 
     collection = collection_service.create(title)
     grabbed_collection = collection_service.get_by_title(collection.title)

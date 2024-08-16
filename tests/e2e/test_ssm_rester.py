@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
 """Tests for `ssm_client` package."""
+
 import json
-import tempfile
 import requests
 import pytest
 
 import ssm_client
+
 
 def test_collection_create(ssm_rester):
     """Test creating collection w/ client"""
@@ -48,8 +49,7 @@ def test_initialize_dataset_for_collection(ssm_rester):
     collection_title = 64 * "X"
     uri = "http://localhost/{}".format(collection_title)
     collection = ssm_client.containers.CollectionContainer(
-        title=collection_title,
-        uri=uri
+        title=collection_title, uri=uri
     )
     ssm_rester.initialize_dataset_for_collection(collection)
     assert ssm_rester.dataset.hostname == ssm_rester.hostname
@@ -61,18 +61,26 @@ def test_metazeunerite_dataset_jsonld_create(ssm_rester, metazeunerite_jsonld):
     ssm_rester.initialize_dataset_for_collection(collection)
     dataset = ssm_rester.dataset.create(metazeunerite_jsonld)
     assert dataset.uuid is not None
-    assert dataset.dataset.get("@graph")[0].get("description") == metazeunerite_jsonld.get("@graph").get("description")
+    assert dataset.dataset.get("@graph")[0].get(
+        "description"
+    ) == metazeunerite_jsonld.get("@graph").get("description")
 
 
-def test_metazeunerite_dataset_ssm_json_create(ssm_rester, metazeunerite_jsonld, metazeunerite_ssm_json):
+def test_metazeunerite_dataset_ssm_json_create(
+    ssm_rester, metazeunerite_jsonld, metazeunerite_ssm_json
+):
     collection = ssm_rester.collection.create("foo-collection-ssm-json")
     ssm_rester.initialize_dataset_for_collection(collection)
     dataset = ssm_rester.dataset.create(metazeunerite_jsonld)
     dataset_ssm_json = ssm_rester.dataset.get_by_uuid(dataset.uuid, format="json")
     print(dataset.dataset.keys())
-    assert dataset.dataset.get("@graph")[0].get("title") == dataset_ssm_json.dataset.get("title")
-    assert dataset.dataset.get("@graph")[0].get("description") == metazeunerite_ssm_json.get("description")
-        
+    assert dataset.dataset.get("@graph")[0].get(
+        "title"
+    ) == dataset_ssm_json.dataset.get("title")
+    assert dataset.dataset.get("@graph")[0].get(
+        "description"
+    ) == metazeunerite_ssm_json.get("description")
+
 
 def test_metazeunerite_dataset_ssm_json_update(ssm_rester, metazeunerite_jsonld):
     # Create collection and upload metazeunerite scidata JSON-LD
@@ -85,7 +93,13 @@ def test_metazeunerite_dataset_ssm_json_update(ssm_rester, metazeunerite_jsonld)
 
     # Modify the 51st data entry for y-axis
     dataseries = dataset_ssm_json.dataset.get("scidata").get("dataseries")
-    y = dataseries[1].get("y-axis").get("parameter").get("numericValueArray")[0].get("numberArray")
+    y = (
+        dataseries[1]
+        .get("y-axis")
+        .get("parameter")
+        .get("numericValueArray")[0]
+        .get("numberArray")
+    )
     y[50] -= 100.0
 
     # Write out the modified SSM JSON metazeunerite data to file
@@ -96,6 +110,8 @@ def test_metazeunerite_dataset_ssm_json_update(ssm_rester, metazeunerite_jsonld)
     # Upload the modified metazeunerite SSM JSON file to converter for SciData JSON-LD format output
     with open(ssm_json_filename, "r") as f:
         file_args = {"upload_file": (ssm_json_filename, f)}
-        response = requests.post("http://localhost:8000/convert/jsonld", files=file_args)
+        response = requests.post(
+            "http://localhost:8000/convert/jsonld", files=file_args
+        )
         print(response.content)
         assert response.status_code == 200

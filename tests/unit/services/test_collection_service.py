@@ -16,9 +16,9 @@ def collection_service():
 
 def test_create(collection_service, requests_mock):  # noqa: F811
     """Test creating collection"""
-    title = 64*"X"
+    title = 64 * "X"
     uri = "http://localhost/{}".format(title)
-    json = {'title': title, 'uri': uri}
+    json = {"title": title, "uri": uri}
 
     requests_mock.post(collection_service._endpoint(), json=json)
     collection = collection_service.create(title)
@@ -30,7 +30,7 @@ def test_read(collection_service, requests_mock):  # noqa: F811
     """Test read collection"""
     title = "foo"
     uri = "bar"
-    json = {'title': title, 'uri': uri}
+    json = {"title": title, "uri": uri}
 
     requests_mock.post(collection_service._endpoint(), json=json)
     collection = collection_service.create(title)
@@ -44,7 +44,7 @@ def test_delete(collection_service, requests_mock):  # noqa: F811
     """Test deleting collection"""
     title = "foo"
     uri = "bar"
-    json = {'title': title, 'uri': uri}
+    json = {"title": title, "uri": uri}
 
     requests_mock.post(collection_service._endpoint(), json=json)
     collection = collection_service.create(title)

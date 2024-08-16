@@ -3,8 +3,8 @@ import json
 
 class CollectionContainer:
     def __init__(self, **kwargs):
-        self.__title = kwargs.get('title', None)
-        self.__uri = kwargs.get('uri', None)
+        self.__title = kwargs.get("title", None)
+        self.__uri = kwargs.get("uri", None)
 
     def __eq__(self, other):
         """

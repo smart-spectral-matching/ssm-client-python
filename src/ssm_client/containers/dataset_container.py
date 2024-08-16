@@ -3,8 +3,8 @@ import json
 
 class DatasetContainer:
     def __init__(self, **kwargs):
-        self.__uuid = kwargs.get('uuid', None)
-        self.__dataset = kwargs.get('dataset', dict())
+        self.__uuid = kwargs.get("uuid", None)
+        self.__dataset = kwargs.get("dataset", dict())
 
     def __eq__(self, other):
         """

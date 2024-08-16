@@ -5,6 +5,7 @@ import pytest
 
 from . import TEST_DATA_DIR
 
+
 @pytest.fixture
 def hnmr_ethanol_jcamp():
     """

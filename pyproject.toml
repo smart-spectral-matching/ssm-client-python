@@ -19,6 +19,9 @@ license = {text = "BSD 3-Clause License"}
 notebooks = [
     "jupyter>=1.0.0",
 ]
+":lint" = [
+    "ruff>=0.6.1",
+]
 
 [tool.pdm.dev-dependencies]
 test = [

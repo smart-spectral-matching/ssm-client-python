@@ -18,7 +18,7 @@ def ssm_rester():
 def test_collection_create(ssm_rester, requests_mock):  # noqa: F811
     """Test creating collection w/ client"""
     title = 64 * "X"
-    json = {'title': title.lower()}
+    json = {"title": title.lower()}
 
     requests_mock.post(ssm_rester.collection._endpoint(), json=json)
     print(ssm_rester.collection)
@@ -31,7 +31,7 @@ def test_collection_read(ssm_rester, requests_mock):  # noqa: F811
     """Test read collection w/ client"""
     title = "foo"
     uri = "bar"
-    json = {'title': title, 'uri': uri}
+    json = {"title": title, "uri": uri}
 
     requests_mock.post(ssm_rester.collection._endpoint(), json=json)
     collection = ssm_rester.collection.create(title)
@@ -45,7 +45,7 @@ def test_collection_delete(ssm_rester, requests_mock):  # noqa: F811
     """Test deleting collection w/ client"""
     title = "foo"
     uri = "bar"
-    json = {'title': title, 'uri': uri}
+    json = {"title": title, "uri": uri}
 
     requests_mock.post(ssm_rester.collection._endpoint(), json=json)
     collection = ssm_rester.collection.create(title)
