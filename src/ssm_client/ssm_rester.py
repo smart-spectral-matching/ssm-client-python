@@ -1,4 +1,4 @@
-from ssm_client.services import CollectionService, ModelService
+from ssm_client.services import CollectionService, DatasetService
 
 
 class SSMRester:
@@ -12,17 +12,17 @@ class SSMRester:
         self.hostname = hostname
 
         self.collection = CollectionService(hostname=self.hostname)
-        self.model = None
+        self.dataset = None
 
-    def initialize_model_for_collection(self, collection):
+    def initialize_dataset_for_collection(self, collection):
         """
-        Initialize the Model service for collection
+        Initialize the Dataset service for collection
 
         Args:
-            collection (CollectionContainer): collection to setup a ModelService for
+            collection (CollectionContainer): collection to setup a DatasetService for
         """
 
-        self.model = ModelService(
+        self.dataset = DatasetService(
             hostname=self.hostname,
             collection=collection,
         )

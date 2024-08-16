@@ -1,5 +1,3 @@
-import numpy as np
-import pathlib
 import pytest
 from typing import List
 
@@ -33,114 +31,15 @@ def _remove_elements_from_list(
     return new_list
 
 
-@pytest.fixture
-def hnmr_ethanol_file():
-    """
-    Hydrogen NMR JCAMP-DX file for ethanol
-    Retrieved on 1/12/2021 from:
-        https://raw.githubusercontent.com/nzhagen/jcamp/master/data/hnmr_spectra/ethanol_nmr.jdx  # noqa: E501
-    """
-    p = pathlib.Path(TEST_DATA_DIR, "jcamp", "hnmr_ethanol.jdx")
-    return p
-
-
-@pytest.fixture
-def infrared_ethanol_file():
-    """
-    Infrared JCAMP-DX file for ethanol
-    Retrieved on 1/12/2021 from:
-        https://raw.githubusercontent.com/nzhagen/jcamp/master/data/infrared_spectra/ethanol.jdx  # noqa: E501
-    """
-    p = pathlib.Path(TEST_DATA_DIR, "jcamp", "infrared_ethanol.jdx")
-    return p
-
-
-@pytest.fixture
-def infrared_ethanol_compressed_file():
-    """
-    Infrared JCAMP-DX file for ethanol using compression
-    Retrieved on 1/12/2021 from:
-        https://raw.githubusercontent.com/nzhagen/jcamp/master/data/infrared_spectra/ethanol2.jdx  # noqa: E501
-    """
-    p = pathlib.Path(TEST_DATA_DIR, "jcamp", "infrared_ethanol_compressed.jdx")
-    return p
-
-
-@pytest.fixture
-def infrared_compound_file():
-    """
-    Infrared JCAMP-DX compound file
-    Retrieved on 1/12/2021 from:
-        https://raw.githubusercontent.com/nzhagen/jcamp/master/data/infrared_spectra/example_compound_file.jdx  # noqa: E501
-    """
-    p = pathlib.Path(TEST_DATA_DIR, "jcamp", "infrared_compound_file.jdx")
-    return p
-
-
-@pytest.fixture
-def infrared_multiline_file():
-    """
-    Infrared JCAMP-DX multiline file
-    Retrieved on 1/12/2021 from:
-        https://raw.githubusercontent.com/nzhagen/jcamp/master/data/infrared_spectra/example_multiline_datasets.jdx  # noqa: E501
-    """
-    p = pathlib.Path(TEST_DATA_DIR, "jcamp", "infrared_multiline_datasets.jdx")
-    return p
-
-
-@pytest.fixture
-def mass_ethanol_file():
-    """
-    Mass spectroscopy JCAMP-DX file
-    Retrieved on 1/12/2021 from:
-        https://raw.githubusercontent.com/nzhagen/jcamp/master/data/mass_spectra/ethanol_ms.jdx # noqa: E501
-    """
-    p = pathlib.Path(TEST_DATA_DIR, "jcamp", "mass_ethanol.jdx")
-    return p
-
-
-@pytest.fixture
-def neutron_emodine_file():
-    """
-    Inelastic neutron spectroscopy JCAMP-DX file
-    Retrieved on 1/12/2021 from:
-        https://raw.githubusercontent.com/nzhagen/jcamp/master/data/neutron_scattering_spectra/emodine.jdx # noqa: E501
-    """
-    p = pathlib.Path(TEST_DATA_DIR, "jcamp", "neutron_emodine.jdx")
-    return p
-
-
-@pytest.fixture
-def raman_tannic_acid_file():
-    """
-    Raman spectroscopy JCAMP-DX file
-    Retrieved on 1/12/2021 from:
-        https://raw.githubusercontent.com/nzhagen/jcamp/master/data/raman_spectra/tannic_acid.jdx # noqa: E501
-    """
-    p = pathlib.Path(TEST_DATA_DIR, "jcamp", "raman_tannic_acid.jdx")
-    return p
-
-
-@pytest.fixture
-def uvvis_toluene_file():
-    """
-    UV-Visible spectroscopy JCAMP-DX file
-    Retrieved on 1/12/2021 from:
-        https://raw.githubusercontent.com/nzhagen/jcamp/master/data/uvvis_spectra/toluene.jdx # noqa: E501
-    """
-    p = pathlib.Path(TEST_DATA_DIR, "jcamp", "uvvis_toluene.jdx")
-    return p
-
-
 # Tests
 
 @pytest.mark.skip("Broken test due to SciDataLib not handling jcamp 'children'")
-def test_read_hnmr(hnmr_ethanol_file):
-    scidata_dict = jcamp.read_jcamp(hnmr_ethanol_file.resolve())
+def test_read_hnmr(hnmr_ethanol_jcamp):
+    scidata_dict = jcamp.read_jcamp(hnmr_ethanol_jcamp.resolve())
 
 
-def test_read_infrared(infrared_ethanol_file):
-    scidata_dict = jcamp.read_jcamp(infrared_ethanol_file.resolve())
+def test_read_infrared(infrared_ethanol_jcamp):
+    scidata_dict = jcamp.read_jcamp(infrared_ethanol_jcamp.resolve())
 
     graph = scidata_dict.get('@graph')
     assert graph['title'] == 'ETHANOL'
@@ -187,8 +86,8 @@ def test_read_infrared(infrared_ethanol_file):
     assert len(parameter_0.get("dataarray")) == 3570 
 
 
-def test_read_infrared_compressed(infrared_ethanol_compressed_file):
-    scidata_dict = jcamp.read_jcamp(infrared_ethanol_compressed_file.resolve())
+def test_read_infrared_compressed(infrared_ethanol_compressed_jcamp):
+    scidata_dict = jcamp.read_jcamp(infrared_ethanol_compressed_jcamp.resolve())
 
     graph = scidata_dict.get('@graph')
     assert graph['title'] == '$$ Begin of the data block'
@@ -217,12 +116,12 @@ def test_read_infrared_compressed(infrared_ethanol_compressed_file):
 
 
 @pytest.mark.skip("Broken test due to SciDataLib not handling jcamp 'children'")
-def test_read_infrared_compound(infrared_compound_file):
-    scidata_dict = jcamp.read_jcamp(infrared_compound_file.resolve())
+def test_read_infrared_compound(infrared_compound_jcamp):
+    scidata_dict = jcamp.read_jcamp(infrared_compound_jcamp.resolve())
 
 
-def test_read_infrared_multiline(infrared_multiline_file):
-    scidata_dict = jcamp.read_jcamp(infrared_multiline_file.resolve())
+def test_read_infrared_multiline(infrared_multiline_jcamp):
+    scidata_dict = jcamp.read_jcamp(infrared_multiline_jcamp.resolve())
 
     graph = scidata_dict.get('@graph')
     assert graph['title'] == 'multiline datasets test'
@@ -254,8 +153,8 @@ def test_read_infrared_multiline(infrared_multiline_file):
     assert len(parameter_0.get("dataarray")) == 1919 
 
 
-def test_read_mass(mass_ethanol_file):
-    scidata_dict = jcamp.read_jcamp(mass_ethanol_file.resolve())
+def test_read_mass(mass_ethanol_jcamp):
+    scidata_dict = jcamp.read_jcamp(mass_ethanol_jcamp.resolve())
 
     graph = scidata_dict.get('@graph')
     assert graph['title'] == 'ethanol'
@@ -286,8 +185,8 @@ def test_read_mass(mass_ethanol_file):
     assert len(parameter_0.get("dataarray")) == 12 
 
 
-def test_read_neutron(neutron_emodine_file):
-    scidata_dict = jcamp.read_jcamp(neutron_emodine_file.resolve())
+def test_read_neutron(neutron_emodine_jcamp):
+    scidata_dict = jcamp.read_jcamp(neutron_emodine_jcamp.resolve())
 
     graph = scidata_dict.get('@graph')
     assert graph['title'] == "Emodine, C15H10O4"
@@ -316,8 +215,8 @@ def test_read_neutron(neutron_emodine_file):
     assert len(parameter_0.get("dataarray")) == 1992 
 
 
-def test_read_uvvis(uvvis_toluene_file):
-    scidata_dict = jcamp.read_jcamp(uvvis_toluene_file.resolve())
+def test_read_uvvis(uvvis_toluene_jcamp):
+    scidata_dict = jcamp.read_jcamp(uvvis_toluene_jcamp.resolve())
 
     graph = scidata_dict.get('@graph')
     assert graph['title'] == "Toluene"
@@ -346,8 +245,8 @@ def test_read_uvvis(uvvis_toluene_file):
     assert len(parameter_0.get("dataarray")) == 335 
 
 
-def test_read_raman(raman_tannic_acid_file):
-    scidata_dict = jcamp.read_jcamp(raman_tannic_acid_file.resolve())
+def test_read_raman(raman_tannic_acid_jcamp):
+    scidata_dict = jcamp.read_jcamp(raman_tannic_acid_jcamp.resolve())
 
     graph = scidata_dict.get('@graph')
     assert graph['title'] == 'tannic acid'
@@ -376,8 +275,8 @@ def test_read_raman(raman_tannic_acid_file):
     assert len(parameter_0.get("dataarray")) == 1949 
 
 
-def test_write_raman(tmp_path, raman_tannic_acid_file):
-    scidata_dict = jcamp.read_jcamp(raman_tannic_acid_file.resolve())
+def test_write_raman(tmp_path, raman_tannic_acid_jcamp):
+    scidata_dict = jcamp.read_jcamp(raman_tannic_acid_jcamp.resolve())
     jcamp_dir = tmp_path / "jcamp"
     jcamp_dir.mkdir()
     filename = jcamp_dir / "raman_tannic_acid.jdx"
@@ -385,7 +284,7 @@ def test_write_raman(tmp_path, raman_tannic_acid_file):
     jcamp.write_jcamp(filename.resolve(), scidata_dict)
 
     result = filename.read_text().splitlines()
-    target = raman_tannic_acid_file.read_text().splitlines()
+    target = raman_tannic_acid_jcamp.read_text().splitlines()
     skip_keys = [
         "##DATA TYPE",
         "##YUNITS",
