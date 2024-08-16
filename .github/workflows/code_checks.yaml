@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   lint:
-    name: Ruff linting, formating, MyPy
+    name: Linting
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
