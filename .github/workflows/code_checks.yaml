@@ -29,8 +29,8 @@ jobs:
           pdm venv create --with-pip --force $PYTHON
           pdm sync --dev -G:all
       - run: |
-          pdm run ruff format --check
-          pdm run ruff check
+          pdm run make lint
+          pdm run make lint-complexity
 
   # Run unit tests only on Windows/MacOS, we can run the full test suite on Linux
   test-unit:
@@ -53,4 +53,5 @@ jobs:
         run: |
           pdm venv create --with-pip --force $PYTHON
           pdm sync --dev -G:all
-      - run: pdm run pytest tests/unit 
+      - run: |
+        pdm run make test
