@@ -25,7 +25,8 @@ class CollectionContainer:
         Support "!=" comparison between CollectionContainers
 
         Args:
-            other (CollectionContainer): Collection to compare for non-equality.
+            other (CollectionContainer):
+                Collection to compare for non-equality.
 
         Return:
             areCollectionsNotEqual (bool)

@@ -26,4 +26,6 @@ def test_read(scidata_nmr_jsonld, outfile):
     assert "version" in output
     assert "generatedAt" in output
     assert output.get("version") == 2
-    assert output.get("@id") == "https://stuchalk.github.io/scidata/examples/nmr/"  # noqa: E501
+    assert (
+        output.get("@id") == "https://stuchalk.github.io/scidata/examples/nmr/"
+    )  # noqa: E501

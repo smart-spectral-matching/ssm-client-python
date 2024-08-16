@@ -44,7 +44,8 @@ class CollectionService:
         Args:
             title (str): title for collection
         Returns:
-            collection (CollectionContainer): Created CollectionContainer object
+            collection (CollectionContainer):
+                Created CollectionContainer object
         """
         json = {"title": title}
         response = requests.post(self._endpoint(), json=json)

@@ -12,7 +12,10 @@ _DATASET_FORMAT_CHOICES = [_FORMAT_JSONLD, _FORMAT_SSM_JSON]
 
 
 class MismatchedCollectionException(Exception):
-    """Raised when CollectionContainer title doesn't match same title passed in"""
+    """
+    Raised when CollectionContainer title doesn't match
+    same title passed in
+    """
 
 
 class UnsupportedDatasetFormatException(Exception):
@@ -21,27 +24,32 @@ class UnsupportedDatasetFormatException(Exception):
 
 class DatasetService:
     def __init__(
-        self, hostname="http://localhost", collection=None, collection_title=None
+        self,
+        hostname="http://localhost",
+        collection=None,
+        collection_title=None,
     ):
         """
         Initialize a DatasetService object
 
         Args:
             hostname (str): Hostname for the SSM Catalog API server
-            collection (CollectionContainer): collection the Datasets will belong to
-            collection_title (str): Title of the collection the Datasets will belong to
+            collection (CollectionContainer): collection for dataset
+            collection_title (str): Title of the collection for dataset
 
         Raises:
             MistmatchedcollectionException:
-                Raised when collection and title both passed in and do not match
+                Raised when collection and title do not match
         """
         self.hostname = hostname
 
         if collection and collection_title:
             if collection.title != collection_title:
                 msg = (
-                    "collection: {collection_title} and title: {title} NOT equal!\n"
-                    "Trying using one method, either the collection OR the title"
+                    "collection: {collection_title} and title: {title}"
+                    "NOT equal!\n"
+                    "Trying using one method, "
+                    "either the collection OR the title"
                 )
                 msg = msg.format(
                     collection_title=collection.title, title=collection_title
@@ -84,7 +92,8 @@ class DatasetService:
             dataset (dict): JSON-LD Dataset to create for collection
 
         Raises:
-            requests.HTTPError: Raised when we cannot find the collection or Dataset
+            requests.HTTPError: Raised when we cannot find
+                the collection or Dataset
 
         Returns:
             dataset (DatasetContainer): Created DatasetContainer object
@@ -113,7 +122,8 @@ class DatasetService:
                 Default: "jsonld" Choices: ["json", "jsonld"]
 
         Raises:
-            requests.HTTPError: Raised when we cannot find the collection or dataset
+            requests.HTTPError: Raised when we cannot find
+                the collection or dataset
 
         Returns:
             dataset (DatasetContainer): DatasetContainer object with given UUID
@@ -148,7 +158,8 @@ class DatasetService:
             dataset (dict): JSON-LD for Dataset to replace
 
         Raises:
-            requests.HTTPError: Raised when we cannot find the collection or dataset
+            requests.HTTPError: Raised when we cannot find
+                the collection or dataset
 
         Returns:
             new_dataset (DatasetContainer): Updated DatasetContainer object
@@ -166,7 +177,8 @@ class DatasetService:
             dataset (dict): JSON-LD with partial dataset to update
 
         Raises:
-            requests.HTTPError: Raised when we cannot find the collection or dataset
+            requests.HTTPError: Raised when we cannot find
+                the collection or dataset
 
         Returns:
             new_dataset (DatasetContainer): Updated DatasetContainer object
@@ -183,7 +195,8 @@ class DatasetService:
             uuid (str): 64-character UUID for dataset
 
         Raises:
-            requests.HTTPError: Raised when we cannot find the collection or dataset
+            requests.HTTPError: Raised when we cannot find
+                the collection or dataset
         """
         response = requests.delete(self._endpoint(uuid))
         response.raise_for_status()

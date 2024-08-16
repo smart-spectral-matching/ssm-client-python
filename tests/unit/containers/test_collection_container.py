@@ -17,8 +17,8 @@ def test_construction_default():
 def test_construction_just_title():
     """Test creating default collection"""
     kwargs = {
-        "title": "5D0DC5589FA2C1F5DE2AB19B47F3923E65B261FABD8ED0F9A9B57CBBE3799988"
-    }  # noqa: E501
+            "title": "5D0DC5589FA2C1F5DE2AB19B47F3923E65B261FABD8ED0F9A9B57CBBE3799988"  # noqa: E501
+    }
     collection = CollectionContainer(**kwargs)
     assert collection.title == kwargs["title"]
     assert collection.uri is None
@@ -27,8 +27,8 @@ def test_construction_just_title():
 def test_construction_just_uri():
     """Test creating default collection"""
     kwargs = {
-        "uri": "http://fuseki:3030/5D0DC5589FA2C1F5DE2AB19B47F3923E65B261FABD8ED0F9A9B57CBBE3799988"
-    }  # noqa: E501
+        "uri": "http://fuseki:3030/5D0DC5589FA2C1F5DE2AB19B47F3923E65B261FABD8ED0F9A9B57CBBE3799988"  # noqa: E501
+    }
     collection = CollectionContainer(**kwargs)
     assert collection.title is None
     assert collection.uri == kwargs["uri"]
