@@ -5,7 +5,10 @@ from ssm_client.containers import DatasetContainer
 from .collection_service import _COLLECTION_ENDPOINT
 
 _DATASETS_ENDPOINT = "datasets"
-_DATASET_FORMAT_CHOICES = ["jsonld", "json"]
+
+_FORMAT_JSONLD = "jsonld"
+_FORMAT_SSM_JSON = "json"
+_DATASET_FORMAT_CHOICES = [_FORMAT_JSONLD, _FORMAT_SSM_JSON]
 
 
 class MismatchedCollectionException(Exception):
@@ -103,7 +106,7 @@ class DatasetService:
         response.raise_for_status()
         return DatasetContainer(**response.json())
 
-    def get_by_uuid(self, uuid, format: str = "jsonld"):
+    def get_by_uuid(self, uuid, format: str = _FORMAT_JSONLD):
         """
         Get dataset for given UUID at SSM Catalog API
 
@@ -132,7 +135,12 @@ class DatasetService:
         response = requests.get(self._endpoint(uuid), params=params)
         response.raise_for_status()
 
-        return DatasetContainer(**response.json())
+        output = DatasetContainer()
+        if format is _FORMAT_JSONLD:
+            output = DatasetContainer(**response.json())
+        elif format is _FORMAT_SSM_JSON:
+            output = DatasetContainer(dataset=response.json())
+        return output
 
     def replace_dataset_for_uuid(self, uuid, dataset):
         """
