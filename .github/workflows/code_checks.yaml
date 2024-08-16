@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Ruff linting, formating, MyPy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PDM
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: "3.8"
+          cache: true
+      - name: Install dependencies
+        run: |
+          pdm venv create --with-pip --force $PYTHON
+          pdm sync --dev -G:all
+      - run: |
+          pdm run ruff format --check
+          pdm run ruff check
+
+  # Run unit tests only on Windows/MacOS, we can run the full test suite on Linux
+  test-unit:
+    name: Windows/MacOS unit tests
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        os:
+          - macos-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PDM
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: true
+      - name: Install dependencies
+        run: |
+          pdm venv create --with-pip --force $PYTHON
+          pdm sync --dev -G:all
+      - run: pdm run pytest tests/unit 
