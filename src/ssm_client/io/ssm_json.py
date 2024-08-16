@@ -1,3 +1,5 @@
+import json
+
 from scidatalib.scidata import SciData
 
 
@@ -10,7 +12,7 @@ def read_ssm_json(filename: str) -> dict:
     Return:
         scidata_dict (dict): SciData JSON-LD dictionary
     """
-    with open(filename, 'r') as fileobj:
+    with open(filename, "r") as fileobj:
         ssm_json_dict = json.load(fileobj)
     scidata_obj = _ssm_json_to_scidata(ssm_json_dict)
     return scidata_obj.output
@@ -64,7 +66,7 @@ def _scidata_to_ssm_json(scidata: SciData) -> dict:
     #   property
     properties = sd.get("property", None)
     if properties:
-        properties = ','.join(properties)
+        properties = ",".join(properties)
         output["scidata"]["property"] = properties
 
     #   methodology
@@ -115,7 +117,6 @@ def _scidata_to_ssm_json(scidata: SciData) -> dict:
     #   dataset
     dataset = sd.get("dataset", None)
     if dataset:
-
         dataseries_list = dataset.get("dataseries", list())
         if dataseries_list:
             output_dataseries_list = list()
@@ -165,10 +166,12 @@ def _scidata_to_ssm_json(scidata: SciData) -> dict:
                             ]
 
                         axis = parameter.get("axis", f"axis-{i}")
-                        output_dataseries_list.append({
-                            f'{axis}': {"parameter": output_parameter},
-                            "hasAxisType": axis
-                        })
+                        output_dataseries_list.append(
+                            {
+                                f"{axis}": {"parameter": output_parameter},
+                                "hasAxisType": axis,
+                            }
+                        )
 
         output_dataseries = output_dataseries_list
         output["scidata"]["dataseries"] = output_dataseries
@@ -188,7 +191,7 @@ def _ssm_json_to_scidata(ssm_json: dict) -> SciData:
     """
     # Construct UID for SciData document from title
     title = ssm_json.get("title", "ssm:dataset")
-    uid = ssm_json.get("uid", f'scidata:jsonld:{title}')
+    uid = ssm_json.get("uid", f"scidata:jsonld:{title}")
 
     # Setup SciData object
     sd = SciData(uid)
@@ -204,7 +207,7 @@ def _ssm_json_to_scidata(ssm_json: dict) -> SciData:
         sd.sources(sources)
 
     properties = ssm_json.get("scidata").get("property", "").split(",")
-    sd.meta['@graph']['scidata']['property'] = properties
+    sd.meta["@graph"]["scidata"]["property"] = properties
 
     description = ssm_json.get("description", "")
     sd.description(description)
@@ -294,4 +297,3 @@ def _ssm_json_to_scidata(ssm_json: dict) -> SciData:
         sd.dataseries(output_dataseries_list)
 
     return sd
-

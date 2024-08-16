@@ -11,7 +11,7 @@ def read_scidata_jsonld(filename):
     Return:
         scidata_dict (dict): SciData JSON-LD dictionary
     """
-    with open(filename, 'r') as fileobj:
+    with open(filename, "r") as fileobj:
         scidata_dict = json.load(fileobj)
     return scidata_dict
 
@@ -25,5 +25,5 @@ def write_scidata_jsonld(filename, scidata_dict):
         filename (str): Filename for SciData JSON-LD
         scidata_dict (dict): SciData JSON-LD dictionary to write out
     """
-    with open(filename, 'w') as fileobj:
+    with open(filename, "w") as fileobj:
         json.dump(scidata_dict, fileobj, indent=2)

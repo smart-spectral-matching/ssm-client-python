@@ -1,13 +1,12 @@
 from ssm_client.io import rruff
-from tests import TEST_DATA_DIR
 
 
 def test_read_rruff(raman_soddyite_rruff):
     scidata_dict = rruff.read_rruff(raman_soddyite_rruff.absolute())
 
-    graph = scidata_dict.get('@graph')
-    assert graph['title'] == 'Soddyite'
-    assert graph['publisher'] == 'RRUFF'
+    graph = scidata_dict.get("@graph")
+    assert graph["title"] == "Soddyite"
+    assert graph["publisher"] == "RRUFF"
     assert graph["uid"] == "rruff:R060361"
     assert "sources" in graph
     sources = graph["sources"]
@@ -32,16 +31,16 @@ def test_read_rruff(raman_soddyite_rruff):
     methodology = graph.get("scidata").get("methodology")
     assert "aspects" in methodology
     aspects = methodology.get("aspects")
-    assert len(aspects) == 1 
+    assert len(aspects) == 1
     assert "settings" in aspects[0]
     settings = aspects[0].get("settings")
-    assert len(settings) == 1 
+    assert len(settings) == 1
     wavelength = settings[0].get("value").get("number")
     assert wavelength == 780
 
     system = scidata_dict.get("@graph").get("scidata").get("system")
     assert "facets" in system
-    assert len(system.get("facets")) == 1 
+    assert len(system.get("facets")) == 1
     material_facet = system["facets"][0]
     assert material_facet["@id"] == "material/1/"
     assert len(material_facet["@type"]) == 12
@@ -60,7 +59,7 @@ def test_read_rruff(raman_soddyite_rruff):
     parameter_0 = dataseries_0.get("parameter")[0]
     assert len(parameter_0) == 9
     assert "dataarray" in parameter_0
-    assert len(parameter_0.get("dataarray")) == 2444 
+    assert len(parameter_0.get("dataarray")) == 2444
 
 
 def test_write_rruff(tmp_path, raman_soddyite_rruff):
@@ -73,6 +72,6 @@ def test_write_rruff(tmp_path, raman_soddyite_rruff):
     target = raman_soddyite_rruff.read_text().splitlines()
 
     for result_element, target_element in zip(result, target):
-        result_list = [x.strip() for x in result_element.split(',')]
-        target_list = [x.strip() for x in target_element.split(',')]
+        result_list = [x.strip() for x in result_element.split(",")]
+        target_list = [x.strip() for x in target_element.split(",")]
         assert result_list == target_list

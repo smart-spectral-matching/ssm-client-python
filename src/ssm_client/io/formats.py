@@ -1,7 +1,7 @@
 from importlib import import_module
 
 
-_MODULE_BASE = 'ssm_client.io.'
+_MODULE_BASE = "ssm_client.io."
 
 
 class UnknownFileTypeError(Exception):
@@ -9,10 +9,10 @@ class UnknownFileTypeError(Exception):
 
 
 ioformats = {
-    'jcamp': 'jcamp',
-    'rruff': 'rruff',
-    'scidata-jsonld': 'scidata_jsonld',
-    'ssm-json': 'ssm_json',
+    "jcamp": "jcamp",
+    "rruff": "rruff",
+    "scidata-jsonld": "scidata_jsonld",
+    "ssm-json": "ssm_json",
 }
 
 
@@ -25,11 +25,11 @@ def _get_ioformat(name):
 
 
 def _readfunc(module, name):
-    return getattr(module, 'read_' + name)
+    return getattr(module, "read_" + name)
 
 
 def _writefunc(module, name):
-    return getattr(module, 'write_' + name)
+    return getattr(module, "write_" + name)
 
 
 def read(filename, ioformat=None, **kwargs) -> dict:

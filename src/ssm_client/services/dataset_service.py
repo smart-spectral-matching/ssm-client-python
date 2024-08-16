@@ -21,10 +21,8 @@ class UnsupportedDatasetFormatException(Exception):
 
 class DatasetService:
     def __init__(
-            self,
-            hostname="http://localhost",
-            collection=None,
-            collection_title=None):
+        self, hostname="http://localhost", collection=None, collection_title=None
+    ):
         """
         Initialize a DatasetService object
 
@@ -46,8 +44,7 @@ class DatasetService:
                     "Trying using one method, either the collection OR the title"
                 )
                 msg = msg.format(
-                    collection_title=collection.title,
-                    title=collection_title
+                    collection_title=collection.title, title=collection_title
                 )
                 raise MismatchedCollectionException(msg)
 
@@ -66,18 +63,18 @@ class DatasetService:
             endpoint (str): Datasets endpoint to use
         """
         endpoint = []
-        endpoint.append(f'{self.uri}/{_COLLECTION_ENDPOINT}')
-        endpoint.append(f'{self.collection_title}/{_DATASETS_ENDPOINT}')
+        endpoint.append(f"{self.uri}/{_COLLECTION_ENDPOINT}")
+        endpoint.append(f"{self.collection_title}/{_DATASETS_ENDPOINT}")
         if dataset:
-            endpoint.append(f'{dataset}')
-        return '/'.join(endpoint)
+            endpoint.append(f"{dataset}")
+        return "/".join(endpoint)
 
     @property
     def uri(self):
         """
         URI property for SSM Catalog API
         """
-        return f'{self.hostname}'
+        return f"{self.hostname}"
 
     def create(self, dataset):
         """
@@ -122,15 +119,15 @@ class DatasetService:
             dataset (DatasetContainer): DatasetContainer object with given UUID
         """
         if format not in _DATASET_FORMAT_CHOICES:
-                msg = (
-                    "format: {format} not supported\n"
-                    "Supported dataset formats are {choices}"
-                )
-                msg = msg.format(
-                    format=format,
-                    choices=_DATASET_FORMAT_CHOICES,
-                )
-                raise UnsupportedDatasetFormatException(msg)
+            msg = (
+                "format: {format} not supported\n"
+                "Supported dataset formats are {choices}"
+            )
+            msg = msg.format(
+                format=format,
+                choices=_DATASET_FORMAT_CHOICES,
+            )
+            raise UnsupportedDatasetFormatException(msg)
         params = {"format": format}
         response = requests.get(self._endpoint(uuid), params=params)
         response.raise_for_status()

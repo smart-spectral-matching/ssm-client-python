@@ -4,12 +4,10 @@
 
 import pytest
 import requests
-import requests_mock  # noqa: F401
 
 from ssm_client.containers import CollectionContainer
 from ssm_client.services import DatasetService
-from ssm_client.services.dataset_service import \
-    MismatchedCollectionException
+from ssm_client.services.dataset_service import MismatchedCollectionException
 
 
 @pytest.fixture
@@ -19,7 +17,7 @@ def dataset_input():
         "@id": "http://dbpedia.org/resource/John_Lennon",
         "name": "John Lennon",
         "born": "1940-10-09",
-        "spouse": "http://dbpedia.org/resource/Cynthia_Lennon"
+        "spouse": "http://dbpedia.org/resource/Cynthia_Lennon",
     }
     return dataset_input
 
@@ -30,21 +28,16 @@ def dataset_output():
         "@context": {
             "birthDate": {
                 "@id": "http://schema.org/birthDate",
-                "@type": "http://www.w3.org/2001/XMLSchema#date"
+                "@type": "http://www.w3.org/2001/XMLSchema#date",
             },
-            "name": {
-                "@id": "http://xmlns.com/foaf/0.1/name"
-            },
-            "spouse": {
-                "@id": "http://schema.org/spouse",
-                "@type": "@id"
-            },
-            "xsd": "http://www.w3.org/2001/XMLSchema#"
+            "name": {"@id": "http://xmlns.com/foaf/0.1/name"},
+            "spouse": {"@id": "http://schema.org/spouse", "@type": "@id"},
+            "xsd": "http://www.w3.org/2001/XMLSchema#",
         },
         "@id": "http://dbpedia.org/resource/John_Lennon",
         "birthDate": "1940-10-09",
         "name": "John Lennon",
-        "spouse": "http://dbpedia.org/resource/Cynthia_Lennon"
+        "spouse": "http://dbpedia.org/resource/Cynthia_Lennon",
     }
     return dataset_output
 
@@ -77,10 +70,12 @@ def test_construction(collection):
     assert dataset.collection_title == collection.title
 
     with pytest.raises(MismatchedCollectionException):
-        DatasetService(collection=collection, collection_title=64*"Z")
+        DatasetService(collection=collection, collection_title=64 * "Z")
 
 
-def test_create(dataset_input, dataset_output, dataset_uuid, dataset_service, requests_mock):  # noqa: F811, E501
+def test_create(
+    dataset_input, dataset_output, dataset_uuid, dataset_service, requests_mock
+):  # noqa: F811, E501
     """Test creating dataset"""
     json = {"uuid": dataset_uuid, "dataset": dataset_output}
 
@@ -90,7 +85,9 @@ def test_create(dataset_input, dataset_output, dataset_uuid, dataset_service, re
     assert dataset.dataset == dataset_output
 
 
-def test_read(dataset_input, dataset_output, dataset_uuid, dataset_service, requests_mock):  # noqa: F811, E501
+def test_read(
+    dataset_input, dataset_output, dataset_uuid, dataset_service, requests_mock
+):  # noqa: F811, E501
     """Test read dataset"""
     json = {"uuid": dataset_uuid, "dataset": dataset_output}
 
@@ -104,7 +101,9 @@ def test_read(dataset_input, dataset_output, dataset_uuid, dataset_service, requ
     assert dataset == grabbed_dataset
 
 
-def test_replace_dataset_for_uuid(dataset_input, dataset_output, dataset_uuid, dataset_service, requests_mock):  # noqa: F811, E501
+def test_replace_dataset_for_uuid(
+    dataset_input, dataset_output, dataset_uuid, dataset_service, requests_mock
+):  # noqa: F811, E501
     """Test replacing a dataset"""
     json = {"uuid": dataset_uuid, "dataset": dataset_output}
 
@@ -121,13 +120,11 @@ def test_replace_dataset_for_uuid(dataset_input, dataset_output, dataset_uuid, d
 
     new_dataset_output = {
         "@context": {
-            "name": {
-                "@id": "http://xmlns.com/foaf/0.1/name"
-            },
-            "xsd": "http://www.w3.org/2001/XMLSchema#"
+            "name": {"@id": "http://xmlns.com/foaf/0.1/name"},
+            "xsd": "http://www.w3.org/2001/XMLSchema#",
         },
         "@id": "http://dbpedia.org/resource/Ringo_Starr",
-        "name": "Ringo Starr"
+        "name": "Ringo Starr",
     }
 
     json["dataset"] = new_dataset_output
@@ -135,7 +132,8 @@ def test_replace_dataset_for_uuid(dataset_input, dataset_output, dataset_uuid, d
     # Replace the dataset
     requests_mock.put(dataset_service._endpoint(dataset_uuid), json=json)
     new_dataset = dataset_service.replace_dataset_for_uuid(
-        dataset.uuid, new_dataset_input)
+        dataset.uuid, new_dataset_input
+    )
 
     # Ensure the dataset we updated and the one we get back match
     requests_mock.get(dataset_service._endpoint(dataset_uuid), json=json)
@@ -144,7 +142,9 @@ def test_replace_dataset_for_uuid(dataset_input, dataset_output, dataset_uuid, d
     assert dataset != grabbed_dataset
 
 
-def test_update_dataset_for_uuid(dataset_input, dataset_output, dataset_uuid, dataset_service, requests_mock):  # noqa: F811, E501
+def test_update_dataset_for_uuid(
+    dataset_input, dataset_output, dataset_uuid, dataset_service, requests_mock
+):  # noqa: F811, E501
     """Test updating a dataset"""
     json = {"uuid": dataset_uuid, "dataset": dataset_output}
 
@@ -161,7 +161,8 @@ def test_update_dataset_for_uuid(dataset_input, dataset_output, dataset_uuid, da
     # Replace the dataset
     requests_mock.patch(dataset_service._endpoint(dataset_uuid), json=json)
     new_dataset = dataset_service.update_dataset_for_uuid(
-        dataset.uuid, dataset_update_input)
+        dataset.uuid, dataset_update_input
+    )
 
     # Ensure the dataset we updated and the one we get back match
     requests_mock.get(dataset_service._endpoint(dataset_uuid), json=json)
@@ -170,7 +171,9 @@ def test_update_dataset_for_uuid(dataset_input, dataset_output, dataset_uuid, da
     assert dataset != grabbed_dataset
 
 
-def test_delete(dataset_input, dataset_output, dataset_uuid, dataset_service, requests_mock):  # noqa: F811, E501
+def test_delete(
+    dataset_input, dataset_output, dataset_uuid, dataset_service, requests_mock
+):  # noqa: F811, E501
     """Test deleting dataset"""
     json = {"uuid": dataset_uuid, "dataset": dataset_output}
 

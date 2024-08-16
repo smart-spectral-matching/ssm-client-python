@@ -6,9 +6,7 @@ from ssm_client.services import CollectionService
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--base-url",
-        default="http://localhost",
-        help="Base url for Calatog API"
+        "--base-url", default="http://localhost", help="Base url for Calatog API"
     )
 
 

@@ -12,7 +12,7 @@ def read_jcamp(filename: str) -> dict:
 
     Args:
         filename (str): Filename to read from for JCAMP-DX files
-    Returns: 
+    Returns:
         scidata_dict (dict): SciData JSON-LD dictionary
     """
     scidata_obj = scidatalib.io.read(filename, ioformat="jcamp")
