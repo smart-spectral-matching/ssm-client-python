@@ -1,23 +1,9 @@
-import pathlib
-import pytest
-
 from ssm_client.io import rruff
 from tests import TEST_DATA_DIR
 
 
-@pytest.fixture
-def raman_soddyite_file():
-    """
-    Raman RRUFF file for Soddyite for wavelength 780 nm
-    Retrieved on 1/12/2021 from:
-        https://rruff.info/tmp_rruff/Soddyite__R060361__Broad_Scan__780__0__unoriented__Raman_Data_RAW__21504.rruff  # noqa: E501
-    """
-    p = pathlib.Path(TEST_DATA_DIR, "rruff", "raman_soddyite.rruff")
-    return p
-
-
-def test_read_rruff(raman_soddyite_file):
-    scidata_dict = rruff.read_rruff(raman_soddyite_file.absolute())
+def test_read_rruff(raman_soddyite_rruff):
+    scidata_dict = rruff.read_rruff(raman_soddyite_rruff.absolute())
 
     graph = scidata_dict.get('@graph')
     assert graph['title'] == 'Soddyite'
@@ -77,14 +63,14 @@ def test_read_rruff(raman_soddyite_file):
     assert len(parameter_0.get("dataarray")) == 2444 
 
 
-def test_write_rruff(tmp_path, raman_soddyite_file):
-    scidata_dict = rruff.read_rruff(raman_soddyite_file.absolute())
+def test_write_rruff(tmp_path, raman_soddyite_rruff):
+    scidata_dict = rruff.read_rruff(raman_soddyite_rruff.absolute())
     rruff_dir = tmp_path / "rruff"
     rruff_dir.mkdir()
     filename = rruff_dir / "raman_soddyite.rruff"
     rruff.write_rruff(filename.absolute(), scidata_dict)
     result = filename.read_text().splitlines()
-    target = raman_soddyite_file.read_text().splitlines()
+    target = raman_soddyite_rruff.read_text().splitlines()
 
     for result_element, target_element in zip(result, target):
         result_list = [x.strip() for x in result_element.split(',')]

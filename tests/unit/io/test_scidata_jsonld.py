@@ -1,21 +1,8 @@
 """Tests for io.scidata"""
-import json
 import pathlib
 import pytest
 
 from ssm_client import io
-from tests import TEST_DATA_DIR
-
-
-@pytest.fixture
-def scidata_nmr_jsonld():
-    """
-    NMR SciData JSON-LD file
-    Retrieved on 1/12/2021 from:
-        https://raw.githubusercontent.com/stuchalk/scidata/master/examples/nmr.jsonld
-    """
-    p = pathlib.Path(TEST_DATA_DIR, "scidata", "nmr.jsonld")
-    return json.loads(p.read_text())
 
 
 @pytest.fixture

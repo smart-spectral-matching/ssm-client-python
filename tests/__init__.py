@@ -1,4 +1,4 @@
-"""Unit test package for ssm_client."""
+"""Testing for SSM Python Client."""
 import pathlib
 
 TEST_DIR = pathlib.Path(__file__).parent.absolute()
