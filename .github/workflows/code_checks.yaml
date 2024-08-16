@@ -54,4 +54,4 @@ jobs:
           pdm venv create --with-pip --force $PYTHON
           pdm sync --dev -G:all
       - run: |
-        pdm run make test
+          pdm run make test-unit
