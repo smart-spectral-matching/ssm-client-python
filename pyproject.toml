@@ -41,7 +41,6 @@ lint = [
 
 [tool.pdm.build]
 package-dir = "src"
-includes = []
 
 [tool.pdm.version]
 source = "file"
